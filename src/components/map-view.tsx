@@ -114,7 +114,16 @@ export default function MapView() {
               position={{ lat: driver.location.coordinates[1], lng: driver.location.coordinates[0] }}
               onClick={() => setSelectedDriver(driver)}
             >
-              <Pin background={vehicleColorMap[driver.vehicleType]} glyphColor="#fff" borderColor={vehicleColorMap[driver.vehicleType]} />
+              {driver.vehicleType === 'bus' ? (
+                <div className="flex flex-col items-center">
+                  <div className="bg-background text-foreground text-xs font-bold px-2 py-1 rounded-md shadow-md -translate-y-2">
+                    {driver.name}
+                  </div>
+                  <Pin background={vehicleColorMap[driver.vehicleType]} glyphColor="#fff" borderColor={vehicleColorMap[driver.vehicleType]} />
+                </div>
+              ) : (
+                <Pin background={vehicleColorMap[driver.vehicleType]} glyphColor="#fff" borderColor={vehicleColorMap[driver.vehicleType]} />
+              )}
             </AdvancedMarker>
           ))}
           {selectedDriver && (
