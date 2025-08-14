@@ -8,7 +8,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
 import { vehicleCategories as initialVehicleCategories, mockDrivers as initialMockDrivers } from "@/lib/mock-data";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import CategoryForm from '@/components/category-form';
 import DriverForm from '@/components/driver-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -23,9 +23,10 @@ const getIconComponent = (iconName: string) => {
 };
 
 const DRIVERS_STORAGE_KEY = 'sulytrack_drivers';
+const CATEGORIES_STORAGE_KEY = 'sulytrack_categories';
 
 export default function AdminPage() {
-  const [categories, setCategories] = useState(initialVehicleCategories.filter(c => c.value !== 'all'));
+  const [categories, setCategories] = useState<VehicleCategory[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [driverDialogOpen, setDriverDialogOpen] = useState(false);
@@ -40,11 +41,35 @@ export default function AdminPage() {
       setDrivers(initialMockDrivers);
       localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(initialMockDrivers));
     }
+
+    const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    const parsedCategories = storedCategories ? JSON.parse(storedCategories) : initialVehicleCategories.filter(c => c.value !== 'all');
+    
+    // Icons are not serializable, so we need to map them back
+    const categoriesWithIcons = parsedCategories.map((cat: Omit<VehicleCategory, 'icon'> & {iconName: string}) => ({
+        ...cat,
+        icon: getIconComponent(cat.iconName)
+    }));
+    setCategories(categoriesWithIcons);
+
   }, []);
 
   const updateDriversStateAndStorage = (newDrivers: Driver[]) => {
     setDrivers(newDrivers);
     localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(newDrivers));
+    window.dispatchEvent(new Event('storage')); // Manually trigger storage event
+  }
+  
+  const updateCategoriesStateAndStorage = (newCategories: VehicleCategory[]) => {
+    const serializableCategories = newCategories.map(c => ({
+      value: c.value,
+      label: c.label,
+      color: c.color,
+      iconName: (c.icon as any).displayName || 'PlusCircle' // Store icon name instead of component
+    }));
+    setCategories(newCategories);
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(serializableCategories));
+    window.dispatchEvent(new Event('storage')); // Manually trigger storage event
   }
 
   const handleAddCategoryClick = () => {
@@ -58,7 +83,7 @@ export default function AdminPage() {
   }
 
   const handleDeleteCategory = (categoryValue: string) => {
-    updateDriversStateAndStorage(categories.filter(c => c.value !== categoryValue));
+    updateCategoriesStateAndStorage(categories.filter(c => c.value !== categoryValue));
   }
   
   const handleCategoryFormSubmit = (data: Omit<VehicleCategory, 'icon'> & {iconName: string}) => {
@@ -72,11 +97,11 @@ export default function AdminPage() {
     };
 
     if (selectedCategory) {
-      setCategories(categories.map(c => 
+      updateCategoriesStateAndStorage(categories.map(c => 
         c.value === selectedCategory.value ? newOrUpdatedCategory : c
       ));
     } else {
-      setCategories([...categories, newOrUpdatedCategory]);
+      updateCategoriesStateAndStorage([...categories, newOrUpdatedCategory]);
     }
     setCategoryDialogOpen(false);
     setSelectedCategory(null);
@@ -326,3 +351,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
