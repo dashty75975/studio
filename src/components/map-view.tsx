@@ -11,6 +11,7 @@ import { Loader2, Terminal } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
+const DRIVERS_STORAGE_KEY = 'sulytrack_drivers';
 
 const vehicleInfoMap = vehicleCategories.reduce((acc, category) => {
   if(category.value !== 'all') {
@@ -30,8 +31,9 @@ export default function MapView() {
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   useEffect(() => {
-    // Initial load of approved and available drivers
-    setAllDrivers(mockDrivers.filter(d => d.isApproved && d.isAvailable));
+    const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
+    const driversToLoad = storedDrivers ? JSON.parse(storedDrivers) : mockDrivers;
+    setAllDrivers(driversToLoad.filter((d: Driver) => d.isApproved && d.isAvailable));
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -66,7 +68,21 @@ export default function MapView() {
       })));
     }, 5000);
 
-    return () => clearInterval(interval);
+    // Listen for storage changes to update map in real-time
+    const handleStorageChange = () => {
+        const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
+        if (storedDrivers) {
+            const allDriversFromStorage = JSON.parse(storedDrivers);
+            setAllDrivers(allDriversFromStorage.filter((d: Driver) => d.isApproved && d.isAvailable));
+        }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const filteredDrivers = useMemo(() => {

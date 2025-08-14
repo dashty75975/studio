@@ -1,18 +1,18 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
-import { vehicleCategories as initialVehicleCategories, mockDrivers } from "@/lib/mock-data";
+import { vehicleCategories as initialVehicleCategories, mockDrivers as initialMockDrivers } from "@/lib/mock-data";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import CategoryForm from '@/components/category-form';
 import DriverForm from '@/components/driver-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import type { VehicleCategory, Driver, VehicleType } from '@/lib/types';
+import type { VehicleCategory, Driver } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import * as LucideIcons from 'lucide-react';
 
@@ -22,14 +22,30 @@ const getIconComponent = (iconName: string) => {
   return Icon || PlusCircle;
 };
 
+const DRIVERS_STORAGE_KEY = 'sulytrack_drivers';
 
 export default function AdminPage() {
   const [categories, setCategories] = useState(initialVehicleCategories.filter(c => c.value !== 'all'));
-  const [drivers, setDrivers] = useState(mockDrivers);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [driverDialogOpen, setDriverDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<VehicleCategory | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+
+  useEffect(() => {
+    const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
+    if (storedDrivers) {
+      setDrivers(JSON.parse(storedDrivers));
+    } else {
+      setDrivers(initialMockDrivers);
+      localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(initialMockDrivers));
+    }
+  }, []);
+
+  const updateDriversStateAndStorage = (newDrivers: Driver[]) => {
+    setDrivers(newDrivers);
+    localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(newDrivers));
+  }
 
   const handleAddCategoryClick = () => {
     setSelectedCategory(null);
@@ -42,7 +58,7 @@ export default function AdminPage() {
   }
 
   const handleDeleteCategory = (categoryValue: string) => {
-    setCategories(categories.filter(c => c.value !== categoryValue));
+    updateDriversStateAndStorage(categories.filter(c => c.value !== categoryValue));
   }
   
   const handleCategoryFormSubmit = (data: Omit<VehicleCategory, 'icon'> & {iconName: string}) => {
@@ -77,14 +93,16 @@ export default function AdminPage() {
   }
 
   const handleDeleteDriver = (driverId: string) => {
-    setDrivers(drivers.filter(d => d._id !== driverId));
+    const updatedDrivers = drivers.filter(d => d._id !== driverId);
+    updateDriversStateAndStorage(updatedDrivers);
   }
 
   const handleDriverFormSubmit = (data: Omit<Driver, '_id' | 'location' | 'rating' | 'createdAt' | 'vehicleImage'>, driverId?: string) => {
     if (driverId) {
-      setDrivers(drivers.map(d =>
-        d._id === driverId ? { ...d, ...data } : d
-      ));
+        const updatedDrivers = drivers.map(d =>
+            d._id === driverId ? { ...d, ...data } : d
+          );
+      updateDriversStateAndStorage(updatedDrivers);
     } else {
       // Add new driver
       const newDriver: Driver = {
@@ -95,7 +113,8 @@ export default function AdminPage() {
         createdAt: new Date().toISOString(),
         vehicleImage: 'https://placehold.co/300x200.png',
       };
-      setDrivers([...drivers, newDriver]);
+      const updatedDrivers = [...drivers, newDriver];
+      updateDriversStateAndStorage(updatedDrivers);
     }
     setDriverDialogOpen(false);
     setSelectedDriver(null);
@@ -165,12 +184,10 @@ export default function AdminPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={() => handleEditDriverClick(driver)}>
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit
-                                </DropdownMenuItem>
-                            </DialogTrigger>
+                            <DropdownMenuItem onSelect={() => handleEditDriverClick(driver)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                            </DropdownMenuItem>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -309,5 +326,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
