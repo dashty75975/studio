@@ -1,19 +1,22 @@
+
+import type { Timestamp } from 'firebase/firestore';
+
 export type VehicleType = 'bus' | 'taxi' | 'truck' | 'motorcycle' | 'vegetable' | 'gas' | 'flat_recovery';
 
 export interface VehicleCategory {
   value: VehicleType | 'all' | string;
   label: string;
   icon: React.ElementType;
+  iconName: string; // Add this to store the name for serialization
   color: string;
 }
 
-
 export interface Driver {
-  _id: string;
+  _id: string; // Firestore document ID
   name: string;
   phone: string;
   email: string;
-  password?: string; // Made optional for existing drivers
+  password?: string;
   vehicleType: VehicleType;
   vehicleModel: string;
   licensePlate: string;
@@ -25,5 +28,5 @@ export interface Driver {
   };
   rating: number;
   isApproved: boolean;
-  createdAt: string;
+  createdAt: Timestamp | string; // Firestore Timestamp
 }

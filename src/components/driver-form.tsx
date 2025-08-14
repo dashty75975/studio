@@ -16,18 +16,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { vehicleCategories } from '@/lib/mock-data';
-import type { Driver } from '@/lib/types';
+import type { Driver, VehicleCategory } from '@/lib/types';
 import { useEffect } from 'react';
-
-const vehicleTypes = vehicleCategories.map(vc => vc.value).filter(v => v !== 'all') as [string, ...string[]];
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format.'),
   email: z.string().email('Invalid email address.'),
   password: z.string().optional(),
-  vehicleType: z.enum(vehicleTypes, { required_error: 'Please select a vehicle type.' }),
+  vehicleType: z.string({ required_error: 'Please select a vehicle type.' }),
   vehicleModel: z.string().min(2, 'Vehicle model is required.'),
   licensePlate: z.string().min(4, 'License plate is too short.'),
   isApproved: z.boolean(),
@@ -39,9 +36,10 @@ type DriverFormValues = z.infer<typeof formSchema>;
 interface DriverFormProps {
   driver: Omit<Driver, 'location' | 'rating' | 'createdAt' | 'vehicleImage' | '_id'> & { _id?: string } | null;
   onSubmit: (data: DriverFormValues, driverId?: string) => void;
+  categories: VehicleCategory[];
 }
 
-export default function DriverForm({ driver, onSubmit }: DriverFormProps) {
+export default function DriverForm({ driver, onSubmit, categories }: DriverFormProps) {
   const form = useForm<DriverFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -88,6 +86,8 @@ export default function DriverForm({ driver, onSubmit }: DriverFormProps) {
     onSubmit(values, driver?._id);
   }
 
+  const vehicleTypes = categories.map(c => ({label: c.label, value: c.value as string})).filter(c => c.value !== 'all');
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto p-1">
@@ -123,10 +123,10 @@ export default function DriverForm({ driver, onSubmit }: DriverFormProps) {
             <FormField control={form.control} name="vehicleType" render={({ field }) => (
                 <FormItem>
                     <FormLabel>Vehicle Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select a vehicle type" /></SelectTrigger></FormControl>
                         <SelectContent>
-                            {vehicleCategories.filter(cat => cat.value !== 'all').map(category => (
+                            {vehicleTypes.map(category => (
                                 <SelectItem key={category.value} value={category.value} className="capitalize">{category.label}</SelectItem>
                             ))}
                         </SelectContent>

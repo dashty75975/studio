@@ -4,22 +4,20 @@
 import { useState, useEffect, useMemo } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import type { Driver, VehicleCategory, VehicleType } from '@/lib/types';
-import { mockDrivers, vehicleCategories as defaultVehicleCategories } from '@/lib/mock-data';
 import VehicleFilter from './vehicle-filter';
 import DriverCard from './driver-card';
 import { Loader2, Terminal } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import * as LucideIcons from 'lucide-react';
 import { PlusCircle } from 'lucide-react';
-
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
-const DRIVERS_STORAGE_KEY = 'sulytrack_drivers';
-const CATEGORIES_STORAGE_KEY = 'sulytrack_categories';
 
 const getIconComponent = (iconName: string) => {
-  const Icon = (LucideIcons as any)[iconName];
-  return Icon || PlusCircle;
+  const Icon = (LucideIcons as any)[iconName] || PlusCircle;
+  return Icon;
 };
 
 
@@ -28,7 +26,7 @@ export default function MapView() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [vehicleType, setVehicleType] = useState<VehicleType | 'all'>('all');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [currentVehicleCategories, setCurrentVehicleCategories] = useState<VehicleCategory[]>(defaultVehicleCategories);
+  const [currentVehicleCategories, setCurrentVehicleCategories] = useState<VehicleCategory[]>([]);
   
   const vehicleInfoMap = useMemo(() => {
     return currentVehicleCategories.reduce((acc, category) => {
@@ -44,10 +42,7 @@ export default function MapView() {
 
 
   useEffect(() => {
-    const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
-    const driversToLoad = storedDrivers ? JSON.parse(storedDrivers) : mockDrivers;
-    setAllDrivers(driversToLoad.filter((d: Driver) => d.isApproved && d.isAvailable));
-
+    // Set user location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -65,27 +60,31 @@ export default function MapView() {
         setUserLocation(SULAYMANIYAH_COORDS); // Fallback for browsers without geolocation
     }
 
-    const loadCategories = () => {
-        const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-        if (storedCategories) {
-            const parsedCategories = JSON.parse(storedCategories);
-            const categoriesWithIcons = parsedCategories.map((cat: Omit<VehicleCategory, 'icon'> & {iconName: string}) => ({
-                ...cat,
-                icon: getIconComponent(cat.iconName)
-            }));
-            const allCategory = defaultVehicleCategories.find(c => c.value === 'all');
-            setCurrentVehicleCategories(allCategory ? [allCategory, ...categoriesWithIcons] : categoriesWithIcons);
-        } else {
-            setCurrentVehicleCategories(defaultVehicleCategories);
-        }
-    };
-    loadCategories();
+    // Subscribe to category updates
+    const categoryUnsubscribe = onSnapshot(collection(db, "categories"), (querySnapshot) => {
+        const categoriesFromDb = querySnapshot.docs.map(doc => ({
+            value: doc.data().value,
+            label: doc.data().label,
+            color: doc.data().color,
+            iconName: doc.data().iconName,
+            icon: getIconComponent(doc.data().iconName),
+        })) as VehicleCategory[];
+        const allCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
+        setCurrentVehicleCategories([allCategory, ...categoriesFromDb]);
+    });
     
-  }, []);
+    // Subscribe to driver updates
+    const q = query(collection(db, "drivers"), where("isApproved", "==", true), where("isAvailable", "==", true));
+    const driverUnsubscribe = onSnapshot(q, (querySnapshot) => {
+        const driversFromDb = querySnapshot.docs.map(doc => ({
+            _id: doc.id,
+            ...doc.data(),
+        })) as Driver[];
+        setAllDrivers(driversFromDb);
+    });
 
-  useEffect(() => {
+    // Simulate real-time movement for demo purposes
     const interval = setInterval(() => {
-      // Simulate real-time updates by slightly moving drivers
       setAllDrivers(prevDrivers => prevDrivers.map(d => ({
         ...d,
         location: {
@@ -98,35 +97,10 @@ export default function MapView() {
       })));
     }, 5000);
 
-    // Listen for storage changes to update map in real-time
-    const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === DRIVERS_STORAGE_KEY) {
-            const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
-            if (storedDrivers) {
-                const allDriversFromStorage = JSON.parse(storedDrivers);
-                setAllDrivers(allDriversFromStorage.filter((d: Driver) => d.isApproved && d.isAvailable));
-            }
-        }
-        if (e.key === CATEGORIES_STORAGE_KEY) {
-            const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-            if (storedCategories) {
-                const parsedCategories = JSON.parse(storedCategories);
-                const categoriesWithIcons = parsedCategories.map((cat: Omit<VehicleCategory, 'icon'> & {iconName: string}) => ({
-                    ...cat,
-                    icon: getIconComponent(cat.iconName)
-                }));
-
-                const allCategory = defaultVehicleCategories.find(c => c.value === 'all');
-                setCurrentVehicleCategories(allCategory ? [allCategory, ...categoriesWithIcons] : categoriesWithIcons);
-            }
-        }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
     return () => {
+        categoryUnsubscribe();
+        driverUnsubscribe();
         clearInterval(interval);
-        window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 
@@ -153,7 +127,7 @@ export default function MapView() {
     );
   }
 
-  if (!userLocation) {
+  if (!userLocation || currentVehicleCategories.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-muted">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

@@ -6,24 +6,27 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
-import { vehicleCategories as initialVehicleCategories, mockDrivers as initialMockDrivers } from "@/lib/mock-data";
+import { vehicleCategories as initialVehicleCategories } from "@/lib/mock-data";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import CategoryForm from '@/components/category-form';
 import DriverForm from '@/components/driver-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { VehicleCategory, Driver } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import * as LucideIcons from 'lucide-react';
-
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
 const getIconComponent = (iconName: string) => {
-  const Icon = (LucideIcons as any)[iconName];
-  return Icon || PlusCircle;
+  const Icon = (LucideIcons as any)[iconName] || PlusCircle;
+  // Ensure the display name is set for serialization
+  if (Icon && !Icon.displayName) {
+    Icon.displayName = iconName;
+  }
+  return Icon;
 };
 
-const DRIVERS_STORAGE_KEY = 'sulytrack_drivers';
-const CATEGORIES_STORAGE_KEY = 'sulytrack_categories';
 
 export default function AdminPage() {
   const [categories, setCategories] = useState<VehicleCategory[]>([]);
@@ -33,57 +36,41 @@ export default function AdminPage() {
   const [selectedCategory, setSelectedCategory] = useState<VehicleCategory | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
-  useEffect(() => {
-    const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
-    if (storedDrivers) {
-      setDrivers(JSON.parse(storedDrivers));
+  // Fetch data from Firestore
+  const fetchCategories = async () => {
+    const querySnapshot = await getDocs(collection(db, "categories"));
+    if (querySnapshot.empty) {
+       // Seed initial categories if collection is empty
+      const batch = initialVehicleCategories.filter(c => c.value !== 'all').map(category => {
+        const { icon, ...rest } = category;
+        return addDoc(collection(db, 'categories'), rest);
+      });
+      await Promise.all(batch);
+      fetchCategories(); // refetch after seeding
     } else {
-      setDrivers(initialMockDrivers);
-      localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(initialMockDrivers));
+      const fetchedCategories = querySnapshot.docs.map(doc => ({
+          ...doc.data(),
+          value: doc.id,
+          icon: getIconComponent(doc.data().iconName),
+      })) as VehicleCategory[];
+      setCategories(fetchedCategories);
     }
+  };
 
-    const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-    const parsedCategories = storedCategories ? JSON.parse(storedCategories) : initialVehicleCategories.filter(c => c.value !== 'all');
-    
-    // Icons are not serializable, so we need to map them back
-    const categoriesWithIcons = parsedCategories.map((cat: Omit<VehicleCategory, 'icon'> & {iconName: string}) => ({
-        ...cat,
-        icon: getIconComponent(cat.iconName)
-    }));
-    setCategories(categoriesWithIcons);
-
-  }, []);
-
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent | CustomEvent) => {
-      if (e instanceof StorageEvent && e.key !== DRIVERS_STORAGE_KEY) return;
-      
-      const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
-      if (storedDrivers) {
-          setDrivers(JSON.parse(storedDrivers));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  const updateDriversStateAndStorage = (newDrivers: Driver[]) => {
-    setDrivers(newDrivers);
-    localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(newDrivers));
-    window.dispatchEvent(new Event('storage')); // Manually trigger storage event
-  }
+  const fetchDrivers = async () => {
+      const querySnapshot = await getDocs(collection(db, "drivers"));
+      const fetchedDrivers = querySnapshot.docs.map(doc => ({
+          _id: doc.id,
+          ...doc.data(),
+      })) as Driver[];
+      setDrivers(fetchedDrivers);
+  };
   
-  const updateCategoriesStateAndStorage = (newCategories: VehicleCategory[]) => {
-    const serializableCategories = newCategories.map(c => ({
-      value: c.value,
-      label: c.label,
-      color: c.color,
-      iconName: (c.icon as any).displayName || 'PlusCircle' // Store icon name instead of component
-    }));
-    setCategories(newCategories);
-    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(serializableCategories));
-    window.dispatchEvent(new Event('storage')); // Manually trigger storage event
-  }
+  useEffect(() => {
+    fetchCategories();
+    fetchDrivers();
+  }, []);
+
 
   const handleAddCategoryClick = () => {
     setSelectedCategory(null);
@@ -95,27 +82,25 @@ export default function AdminPage() {
     setCategoryDialogOpen(true);
   }
 
-  const handleDeleteCategory = (categoryValue: string) => {
-    updateCategoriesStateAndStorage(categories.filter(c => c.value !== categoryValue));
+  const handleDeleteCategory = async (categoryValue: string) => {
+    await deleteDoc(doc(db, "categories", categoryValue));
+    fetchCategories();
   }
   
-  const handleCategoryFormSubmit = (data: Omit<VehicleCategory, 'icon'> & {iconName: string}) => {
-    const IconComponent = getIconComponent(data.iconName);
-
-    const newOrUpdatedCategory: VehicleCategory = {
-      value: data.value,
+  const handleCategoryFormSubmit = async (data: Omit<VehicleCategory, 'icon'> & {iconName: string}) => {
+    const categoryData = {
       label: data.label,
       color: data.color,
-      icon: IconComponent,
+      iconName: data.iconName,
     };
 
     if (selectedCategory) {
-      updateCategoriesStateAndStorage(categories.map(c => 
-        c.value === selectedCategory.value ? newOrUpdatedCategory : c
-      ));
+      const docRef = doc(db, "categories", selectedCategory.value as string);
+      await updateDoc(docRef, categoryData);
     } else {
-      updateCategoriesStateAndStorage([...categories, newOrUpdatedCategory]);
+      await addDoc(collection(db, "categories"), { ...categoryData, value: data.value });
     }
+    fetchCategories();
     setCategoryDialogOpen(false);
     setSelectedCategory(null);
   };
@@ -130,37 +115,32 @@ export default function AdminPage() {
     setDriverDialogOpen(true);
   }
 
-  const handleDeleteDriver = (driverId: string) => {
-    const updatedDrivers = drivers.filter(d => d._id !== driverId);
-    updateDriversStateAndStorage(updatedDrivers);
+  const handleDeleteDriver = async (driverId: string) => {
+    await deleteDoc(doc(db, "drivers", driverId));
+    fetchDrivers();
   }
 
-  const handleDriverFormSubmit = (data: Omit<Driver, '_id' | 'location' | 'rating' | 'createdAt' | 'vehicleImage'>, driverId?: string) => {
+  const handleDriverFormSubmit = async (data: Omit<Driver, '_id' | 'location' | 'rating' | 'createdAt' | 'vehicleImage'>, driverId?: string) => {
     if (driverId) {
-        const updatedDrivers = drivers.map(d => {
-            if (d._id === driverId) {
-              const updatedDriver = { ...d, ...data };
-              if (!data.password) {
-                updatedDriver.password = d.password; // Keep old password if new one is not provided
-              }
-              return updatedDriver;
-            }
-            return d;
-        });
-      updateDriversStateAndStorage(updatedDrivers);
+        const docRef = doc(db, "drivers", driverId);
+        const updateData: Partial<Driver> = { ...data };
+        // Don't update password if it's not provided
+        if (!data.password) {
+          delete updateData.password;
+        }
+        await updateDoc(docRef, updateData);
     } else {
       // Add new driver
-      const newDriver: Driver = {
+      const newDriver = {
         ...data,
-        _id: (Math.random() * 10000).toString(),
         location: { type: 'Point', coordinates: [45.4333, 35.5642] }, // Default location
         rating: 5,
-        createdAt: new Date().toISOString(),
+        createdAt: serverTimestamp(),
         vehicleImage: 'https://placehold.co/300x200.png',
       };
-      const updatedDrivers = [...drivers, newDriver];
-      updateDriversStateAndStorage(updatedDrivers);
+      await addDoc(collection(db, "drivers"), newDriver);
     }
+    fetchDrivers();
     setDriverDialogOpen(false);
     setSelectedDriver(null);
   };
@@ -270,6 +250,7 @@ export default function AdminPage() {
             <DriverForm
                 driver={selectedDriver}
                 onSubmit={handleDriverFormSubmit}
+                categories={categories}
             />
         </DialogContent>
         </Dialog>

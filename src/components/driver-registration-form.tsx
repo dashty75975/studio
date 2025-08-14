@@ -4,7 +4,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -21,6 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
 import { vehicleCategories } from '@/lib/mock-data';
 import { Switch } from './ui/switch';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const vehicleTypes = vehicleCategories.map(vc => vc.value).filter(v => v !== 'all') as [string, ...string[]];
 
@@ -32,13 +33,15 @@ const formSchema = z.object({
   vehicleType: z.enum(vehicleTypes, { required_error: 'Please select a vehicle type.' }),
   vehicleModel: z.string().min(2, 'Vehicle model is required.'),
   licensePlate: z.string().min(4, 'License plate is too short.'),
-  vehicleImage: z.any().refine((files) => files?.length === 1, 'Vehicle image is required.'),
+  // vehicleImage: z.any().refine((files) => files?.length === 1, 'Vehicle image is required.'),
   isAvailable: z.boolean().default(false),
 });
 
+type RegistrationFormValues = z.infer<typeof formSchema>;
+
 export default function DriverRegistrationForm() {
   const { toast } = useToast();
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<RegistrationFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
@@ -47,22 +50,40 @@ export default function DriverRegistrationForm() {
       password: '',
       vehicleModel: '',
       licensePlate: '',
-      vehicleImage: undefined,
+      // vehicleImage: undefined,
       isAvailable: true,
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, you would submit this to your backend, likely using a server action.
-    console.log(values);
-    toast({
-      title: "Registration Submitted!",
-      description: "Your application is under review. We will notify you once it's approved.",
-    });
-    form.reset();
+  async function onSubmit(values: RegistrationFormValues) {
+    try {
+      // In a real app, you would also handle file uploads for vehicleImage to Firebase Storage
+      const newDriverData = {
+        ...values,
+        isApproved: false, // Applications require admin approval
+        rating: 5, // Default rating
+        location: { type: 'Point', coordinates: [45.4333, 35.5642] }, // Default location
+        vehicleImage: 'https://placehold.co/300x200.png', // Placeholder image
+        createdAt: serverTimestamp(),
+      };
+      await addDoc(collection(db, 'drivers'), newDriverData);
+      
+      toast({
+        title: "Registration Submitted!",
+        description: "Your application is under review. We will notify you once it's approved.",
+      });
+      form.reset();
+    } catch (error) {
+      console.error("Error submitting registration: ", error);
+      toast({
+        variant: 'destructive',
+        title: "Submission Failed",
+        description: "An error occurred while submitting your application. Please try again.",
+      });
+    }
   }
 
-  const fileRef = form.register("vehicleImage");
+  // const fileRef = form.register("vehicleImage");
 
   return (
     <Form {...form}>
@@ -132,14 +153,14 @@ export default function DriverRegistrationForm() {
                         <FormMessage />
                     </FormItem>
                 )} />
-                <FormField control={form.control} name="vehicleImage" render={({ field }) => (
+                {/* <FormField control={form.control} name="vehicleImage" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Vehicle Image</FormLabel>
                         <FormControl><Input type="file" accept="image/*" {...fileRef} /></FormControl>
                         <FormDescription>A clear picture of your vehicle.</FormDescription>
                         <FormMessage />
                     </FormItem>
-                )} />
+                )} /> */}
             </div>
         </div>
         <Separator />

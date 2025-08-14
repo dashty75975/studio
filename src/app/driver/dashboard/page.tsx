@@ -10,8 +10,9 @@ import type { Driver } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 
-const DRIVERS_STORAGE_KEY = 'sulytrack_drivers';
 const LOGGED_IN_DRIVER_KEY = 'sulytrack_logged_in_driver';
 
 export default function DriverDashboardPage() {
@@ -25,31 +26,28 @@ export default function DriverDashboardPage() {
       return;
     }
 
-    const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
-    const allDrivers: Driver[] = storedDrivers ? JSON.parse(storedDrivers) : [];
-    const currentDriver = allDrivers.find(d => d._id === loggedInDriverId);
+    const docRef = doc(db, 'drivers', loggedInDriverId);
 
-    if (currentDriver) {
-      setDriver(currentDriver);
-    } else {
-      // Driver not found, maybe data is out of sync. Clear login and redirect.
-      localStorage.removeItem(LOGGED_IN_DRIVER_KEY);
-      router.push('/driver/login');
-    }
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+            setDriver({ _id: docSnap.id, ...docSnap.data() } as Driver);
+        } else {
+            // Driver not found, maybe data is out of sync. Clear login and redirect.
+            console.log("No such document!");
+            localStorage.removeItem(LOGGED_IN_DRIVER_KEY);
+            router.push('/driver/login');
+        }
+    });
+
+    return () => unsubscribe();
+
   }, [router]);
 
-  const updateDriverStatus = (isAvailable: boolean) => {
+  const updateDriverStatus = async (isAvailable: boolean) => {
     if (!driver) return;
     
-    const updatedDriver = { ...driver, isAvailable };
-    setDriver(updatedDriver);
-
-    const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
-    const allDrivers: Driver[] = storedDrivers ? JSON.parse(storedDrivers) : [];
-    const updatedDrivers = allDrivers.map(d => d._id === driver._id ? updatedDriver : d);
-    
-    localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(updatedDrivers));
-    window.dispatchEvent(new Event('storage')); // Manually trigger storage event for map view
+    const docRef = doc(db, 'drivers', driver._id);
+    await updateDoc(docRef, { isAvailable });
   };
 
   const handleLogout = () => {

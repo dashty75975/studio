@@ -16,12 +16,15 @@ import {
 import { Input } from '@/components/ui/input';
 import type { VehicleCategory } from '@/lib/types';
 import { useEffect } from 'react';
+import * as LucideIcons from 'lucide-react';
 
 const formSchema = z.object({
   label: z.string().min(2, 'Category name must be at least 2 characters.'),
   value: z.string().min(2, 'Value must be at least 2 characters (e.g., "new_service").').regex(/^[a-z0-9_]+$/, 'Value must be lowercase letters, numbers, and underscores only.'),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a valid hex color code (e.g., #RRGGBB).'),
-  iconName: z.string().min(1, 'Icon name is required.'),
+  iconName: z.string().min(1, 'Icon name is required.').refine(val => Object.keys(LucideIcons).includes(val), {
+    message: "Invalid icon name from lucide-react.",
+  }),
 });
 
 type CategoryFormValues = z.infer<typeof formSchema>;
@@ -29,17 +32,6 @@ type CategoryFormValues = z.infer<typeof formSchema>;
 interface CategoryFormProps {
   category: VehicleCategory | null;
   onSubmit: (data: CategoryFormValues) => void;
-}
-
-const getIconName = (IconComponent: React.ElementType | undefined): string => {
-    if (!IconComponent) return '';
-    // This is a simplified way to get the name, might need adjustment
-    // based on how lucide-react names its components.
-    if (typeof IconComponent === 'object' && 'displayName' in IconComponent) {
-      return (IconComponent as any).displayName;
-    }
-    // A more robust way might be needed if displayNames are not consistent
-    return 'PlusCircle';
 }
 
 export default function CategoryForm({ category, onSubmit }: CategoryFormProps) {
@@ -59,7 +51,7 @@ export default function CategoryForm({ category, onSubmit }: CategoryFormProps) 
         label: category.label,
         value: category.value as string,
         color: category.color,
-        iconName: getIconName(category.icon),
+        iconName: category.iconName,
       });
     } else {
         form.reset({
