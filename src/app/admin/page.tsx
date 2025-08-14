@@ -19,7 +19,7 @@ import * as LucideIcons from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
-const ADMIN_LOGGED_IN_KEY = 'sulytrack_admin_logged_in';
+const ADMIN_LOGGED_IN_KEY = 'rega_admin_logged_in';
 
 const getIconComponent = (iconName: string) => {
   const Icon = (LucideIcons as any)[iconName] || PlusCircle;

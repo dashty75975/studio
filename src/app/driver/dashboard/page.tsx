@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 
-const LOGGED_IN_DRIVER_KEY = 'sulytrack_logged_in_driver';
+const LOGGED_IN_DRIVER_KEY = 'rega_logged_in_driver';
 
 export default function DriverDashboardPage() {
   const [driver, setDriver] = useState<Driver | null>(null);

@@ -8,7 +8,7 @@ export default function RegisterPage() {
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold tracking-tight">Driver Registration</CardTitle>
-          <CardDescription>Join SulyTrack and start driving today. Fill out the form below to apply.</CardDescription>
+          <CardDescription>Join REGA and start driving today. Fill out the form below to apply.</CardDescription>
         </CardHeader>
         <CardContent>
           <DriverRegistrationForm />

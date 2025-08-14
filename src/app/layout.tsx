@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import Header from "@/components/header"
 
 export const metadata: Metadata = {
-  title: 'SulyTrack',
+  title: 'REGA',
   description: 'Real-time vehicle tracking in Sulaymaniyah.',
 };
 

@@ -142,7 +142,7 @@ export default function MapView() {
         <Map
           defaultCenter={userLocation}
           defaultZoom={13}
-          mapId="sulytrack-map"
+          mapId="rega-map"
           disableDefaultUI={false}
           gestureHandling={'greedy'}
           className="h-full w-full"

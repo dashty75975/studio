@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
-const ADMIN_LOGGED_IN_KEY = 'sulytrack_admin_logged_in';
+const ADMIN_LOGGED_IN_KEY = 'rega_admin_logged_in';
 const ADMIN_EMAIL = 'euzardi@gmail.com';
 const ADMIN_PASSWORD = 'Sarchnar1@';
 
