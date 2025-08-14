@@ -54,6 +54,19 @@ export default function AdminPage() {
 
   }, []);
 
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent | CustomEvent) => {
+      if (e instanceof StorageEvent && e.key !== DRIVERS_STORAGE_KEY) return;
+      
+      const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
+      if (storedDrivers) {
+          setDrivers(JSON.parse(storedDrivers));
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const updateDriversStateAndStorage = (newDrivers: Driver[]) => {
     setDrivers(newDrivers);
     localStorage.setItem(DRIVERS_STORAGE_KEY, JSON.stringify(newDrivers));
@@ -351,5 +364,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-    
