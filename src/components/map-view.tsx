@@ -10,7 +10,7 @@ import { Loader2, Terminal, Grip, PlusCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import * as LucideIcons from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
@@ -72,8 +72,26 @@ export default function MapView() {
         setCurrentVehicleCategories([allCategory, ...categoriesFromDb]);
     });
     
-    // Subscribe to driver updates
-    const q = query(collection(db, "drivers"), where("isApproved", "==", true), where("isAvailable", "==", true));
+    return () => {
+        categoryUnsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const driversRef = collection(db, "drivers");
+    let q;
+    
+    if (vehicleType === 'all') {
+        q = query(driversRef, where("isApproved", "==", true), where("isAvailable", "==", true));
+    } else {
+        q = query(
+            driversRef, 
+            where("isApproved", "==", true), 
+            where("isAvailable", "==", true),
+            where("vehicleType", "==", vehicleType)
+        );
+    }
+
     const driverUnsubscribe = onSnapshot(q, (querySnapshot) => {
         const driversFromDb = querySnapshot.docs.map(doc => ({
             _id: doc.id,
@@ -83,17 +101,10 @@ export default function MapView() {
     });
 
     return () => {
-        categoryUnsubscribe();
         driverUnsubscribe();
     };
-  }, []);
+}, [vehicleType]);
 
-  const filteredDrivers = useMemo(() => {
-    if (vehicleType === 'all') {
-      return allDrivers;
-    }
-    return allDrivers.filter((driver) => driver.vehicleType === vehicleType);
-  }, [allDrivers, vehicleType]);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -136,7 +147,7 @@ export default function MapView() {
               <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
             </AdvancedMarker>
           )}
-          {filteredDrivers.map((driver) => {
+          {allDrivers.map((driver) => {
             const vehicleInfo = vehicleInfoMap[driver.vehicleType as VehicleType];
             const Icon = vehicleInfo?.icon || Pin;
             const color = vehicleInfo?.color || '#333';
