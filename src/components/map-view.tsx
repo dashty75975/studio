@@ -3,25 +3,24 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
-import type { Driver, VehicleType } from '@/lib/types';
-import { mockDrivers, vehicleCategories } from '@/lib/mock-data';
+import type { Driver, VehicleCategory, VehicleType } from '@/lib/types';
+import { mockDrivers, vehicleCategories as defaultVehicleCategories } from '@/lib/mock-data';
 import VehicleFilter from './vehicle-filter';
 import DriverCard from './driver-card';
 import { Loader2, Terminal } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
+import * as LucideIcons from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
+
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 const DRIVERS_STORAGE_KEY = 'sulytrack_drivers';
+const CATEGORIES_STORAGE_KEY = 'sulytrack_categories';
 
-const vehicleInfoMap = vehicleCategories.reduce((acc, category) => {
-  if(category.value !== 'all') {
-    acc[category.value] = {
-      color: category.color,
-      icon: category.icon,
-    };
-  }
-  return acc;
-}, {} as Record<string, { color: string; icon: React.ElementType }>);
+const getIconComponent = (iconName: string) => {
+  const Icon = (LucideIcons as any)[iconName];
+  return Icon || PlusCircle;
+};
 
 
 export default function MapView() {
@@ -29,6 +28,20 @@ export default function MapView() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [vehicleType, setVehicleType] = useState<VehicleType | 'all'>('all');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [currentVehicleCategories, setCurrentVehicleCategories] = useState<VehicleCategory[]>(defaultVehicleCategories);
+  
+  const vehicleInfoMap = useMemo(() => {
+    return currentVehicleCategories.reduce((acc, category) => {
+        if(category.value !== 'all') {
+            acc[category.value] = {
+            color: category.color,
+            icon: category.icon,
+            };
+        }
+        return acc;
+    }, {} as Record<string, { color: string; icon: React.ElementType }>);
+  }, [currentVehicleCategories]);
+
 
   useEffect(() => {
     const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
@@ -51,6 +64,23 @@ export default function MapView() {
     } else {
         setUserLocation(SULAYMANIYAH_COORDS); // Fallback for browsers without geolocation
     }
+
+    const loadCategories = () => {
+        const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+        if (storedCategories) {
+            const parsedCategories = JSON.parse(storedCategories);
+            const categoriesWithIcons = parsedCategories.map((cat: Omit<VehicleCategory, 'icon'> & {iconName: string}) => ({
+                ...cat,
+                icon: getIconComponent(cat.iconName)
+            }));
+            const allCategory = defaultVehicleCategories.find(c => c.value === 'all');
+            setCurrentVehicleCategories(allCategory ? [allCategory, ...categoriesWithIcons] : categoriesWithIcons);
+        } else {
+            setCurrentVehicleCategories(defaultVehicleCategories);
+        }
+    };
+    loadCategories();
+    
   }, []);
 
   useEffect(() => {
@@ -69,11 +99,26 @@ export default function MapView() {
     }, 5000);
 
     // Listen for storage changes to update map in real-time
-    const handleStorageChange = () => {
-        const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
-        if (storedDrivers) {
-            const allDriversFromStorage = JSON.parse(storedDrivers);
-            setAllDrivers(allDriversFromStorage.filter((d: Driver) => d.isApproved && d.isAvailable));
+    const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === DRIVERS_STORAGE_KEY) {
+            const storedDrivers = localStorage.getItem(DRIVERS_STORAGE_KEY);
+            if (storedDrivers) {
+                const allDriversFromStorage = JSON.parse(storedDrivers);
+                setAllDrivers(allDriversFromStorage.filter((d: Driver) => d.isApproved && d.isAvailable));
+            }
+        }
+        if (e.key === CATEGORIES_STORAGE_KEY) {
+            const storedCategories = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+            if (storedCategories) {
+                const parsedCategories = JSON.parse(storedCategories);
+                const categoriesWithIcons = parsedCategories.map((cat: Omit<VehicleCategory, 'icon'> & {iconName: string}) => ({
+                    ...cat,
+                    icon: getIconComponent(cat.iconName)
+                }));
+
+                const allCategory = defaultVehicleCategories.find(c => c.value === 'all');
+                setCurrentVehicleCategories(allCategory ? [allCategory, ...categoriesWithIcons] : categoriesWithIcons);
+            }
         }
     };
 
@@ -119,7 +164,7 @@ export default function MapView() {
 
   return (
     <APIProvider apiKey={apiKey}>
-      <div className="h-full w-full">
+      <div className="h-full w-full relative">
         <Map
           defaultCenter={userLocation}
           defaultZoom={13}
@@ -172,7 +217,7 @@ export default function MapView() {
             </InfoWindow>
           )}
         </Map>
-        <VehicleFilter vehicleType={vehicleType} setVehicleType={setVehicleType} />
+        <VehicleFilter vehicleCategories={currentVehicleCategories} vehicleType={vehicleType} setVehicleType={setVehicleType} />
       </div>
     </APIProvider>
   );
