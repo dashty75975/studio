@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -19,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
 import { vehicleCategories } from '@/lib/mock-data';
+import { Switch } from './ui/switch';
 
 const vehicleTypes = vehicleCategories.map(vc => vc.value).filter(v => v !== 'all') as [string, ...string[]];
 
@@ -31,6 +33,7 @@ const formSchema = z.object({
   vehicleModel: z.string().min(2, 'Vehicle model is required.'),
   licensePlate: z.string().min(4, 'License plate is too short.'),
   vehicleImage: z.any().refine((files) => files?.length === 1, 'Vehicle image is required.'),
+  isAvailable: z.boolean().default(false),
 });
 
 export default function DriverRegistrationForm() {
@@ -45,6 +48,7 @@ export default function DriverRegistrationForm() {
       vehicleModel: '',
       licensePlate: '',
       vehicleImage: undefined,
+      isAvailable: true,
     },
   });
 
@@ -138,8 +142,31 @@ export default function DriverRegistrationForm() {
                 )} />
             </div>
         </div>
+        <Separator />
+        <div className="space-y-4">
+            <h3 className="text-lg font-medium">Availability</h3>
+             <FormField
+                control={form.control}
+                name="isAvailable"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5 mr-4">
+                        <FormLabel>Available for hire</FormLabel>
+                        <FormDescription>Set your status to online. You can change this later.</FormDescription>
+                    </div>
+                    <FormControl>
+                        <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        />
+                    </FormControl>
+                    </FormItem>
+                )}
+            />
+        </div>
         <Button type="submit" className="w-full">Submit Application</Button>
       </form>
     </Form>
   );
 }
+
