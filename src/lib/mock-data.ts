@@ -1,7 +1,7 @@
-import type { Driver, VehicleType } from './types';
+import type { Driver, VehicleCategory } from './types';
 import { Car, Bus, Truck, Bike, Carrot, Fuel, Wrench, Grip } from 'lucide-react';
 
-export const vehicleCategories: { value: VehicleType | 'all'; label: string; icon: React.ElementType; color: string }[] = [
+export const vehicleCategories: VehicleCategory[] = [
     { value: 'all', label: 'All', icon: Grip, color: '#ffffff' },
     { value: 'taxi', label: 'Taxi', icon: Car, color: '#FFD700' },
     { value: 'bus', label: 'Bus', icon: Bus, color: '#00BFFF' },

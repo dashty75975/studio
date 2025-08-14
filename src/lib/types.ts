@@ -1,5 +1,13 @@
 export type VehicleType = 'bus' | 'taxi' | 'truck' | 'motorcycle' | 'vegetable' | 'gas' | 'flat_recovery';
 
+export interface VehicleCategory {
+  value: VehicleType | 'all' | string;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+
 export interface Driver {
   _id: string;
   name: string;
