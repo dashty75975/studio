@@ -13,6 +13,13 @@ import CategoryForm from '@/components/category-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { VehicleCategory, Driver } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import * as LucideIcons from 'lucide-react';
+
+
+const getIconComponent = (iconName: string) => {
+  const Icon = (LucideIcons as any)[iconName];
+  return Icon || PlusCircle;
+};
 
 
 export default function AdminPage() {
@@ -36,19 +43,23 @@ export default function AdminPage() {
   }
   
   const handleCategoryFormSubmit = (data: Omit<VehicleCategory, 'icon'> & {iconName: string}) => {
-    // In a real app, you'd look up the icon component from a map
-    // For now, we'll just show a placeholder or a default icon.
-    const newCategory: any = {
+    const IconComponent = getIconComponent(data.iconName);
+
+    const newOrUpdatedCategory: VehicleCategory = {
       value: data.value,
       label: data.label,
       color: data.color,
-      icon: PlusCircle, // Placeholder
+      icon: IconComponent,
     };
 
     if (selectedCategory) {
-      setCategories(categories.map(c => c.value === selectedCategory.value ? newCategory : c));
+      // Update existing category
+      setCategories(categories.map(c => 
+        c.value === selectedCategory.value ? newOrUpdatedCategory : c
+      ));
     } else {
-      setCategories([...categories, newCategory]);
+      // Add new category
+      setCategories([...categories, newOrUpdatedCategory]);
     }
     setCategoryDialogOpen(false);
     setSelectedCategory(null);

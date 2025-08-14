@@ -21,7 +21,7 @@ const formSchema = z.object({
   label: z.string().min(2, 'Category name must be at least 2 characters.'),
   value: z.string().min(2, 'Value must be at least 2 characters (e.g., "new_service").').regex(/^[a-z0-9_]+$/, 'Value must be lowercase letters, numbers, and underscores only.'),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Must be a valid hex color code (e.g., #RRGGBB).'),
-  iconName: z.string().min(2, 'Icon name is required.'),
+  iconName: z.string().min(1, 'Icon name is required.'),
 });
 
 type CategoryFormValues = z.infer<typeof formSchema>;
@@ -29,6 +29,17 @@ type CategoryFormValues = z.infer<typeof formSchema>;
 interface CategoryFormProps {
   category: VehicleCategory | null;
   onSubmit: (data: CategoryFormValues) => void;
+}
+
+const getIconName = (IconComponent: React.ElementType | undefined): string => {
+    if (!IconComponent) return '';
+    // This is a simplified way to get the name, might need adjustment
+    // based on how lucide-react names its components.
+    if (typeof IconComponent === 'object' && 'displayName' in IconComponent) {
+      return (IconComponent as any).displayName;
+    }
+    // A more robust way might be needed if displayNames are not consistent
+    return 'PlusCircle';
 }
 
 export default function CategoryForm({ category, onSubmit }: CategoryFormProps) {
@@ -48,7 +59,7 @@ export default function CategoryForm({ category, onSubmit }: CategoryFormProps) 
         label: category.label,
         value: category.value as string,
         color: category.color,
-        iconName: (category.icon as any).displayName || 'Icon', // This is a simplification
+        iconName: getIconName(category.icon),
       });
     } else {
         form.reset({
@@ -111,7 +122,7 @@ export default function CategoryForm({ category, onSubmit }: CategoryFormProps) 
           name="iconName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Icon Name</FormLabel>
+              <FormLabel>Icon Name (from Lucide-React)</FormLabel>
               <FormControl>
                 <Input placeholder="e.g. Rocket" {...field} />
               </FormControl>
@@ -126,4 +137,3 @@ export default function CategoryForm({ category, onSubmit }: CategoryFormProps) 
     </Form>
   );
 }
-
