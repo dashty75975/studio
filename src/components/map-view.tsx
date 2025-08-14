@@ -117,7 +117,7 @@ export default function MapView() {
               {driver.vehicleType === 'bus' ? (
                 <div className="flex flex-col items-center">
                   <div className="bg-background text-foreground text-xs font-bold px-2 py-1 rounded-md shadow-md -translate-y-2">
-                    {driver.name}
+                    {driver.licensePlate}
                   </div>
                   <Pin background={vehicleColorMap[driver.vehicleType]} glyphColor="#fff" borderColor={vehicleColorMap[driver.vehicleType]} />
                 </div>
