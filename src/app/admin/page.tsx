@@ -166,12 +166,10 @@ export default function AdminPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DialogTrigger asChild>
-                                <DropdownMenuItem onClick={() => handleEditDriverClick(driver)}>
+                            <DropdownMenuItem onSelect={() => handleEditDriverClick(driver)}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
-                                </DropdownMenuItem>
-                            </DialogTrigger>
+                            </DropdownMenuItem>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -271,7 +269,7 @@ export default function AdminPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditCategoryClick(category as VehicleCategory)}>
+                          <DropdownMenuItem onSelect={() => handleEditCategoryClick(category as VehicleCategory)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
