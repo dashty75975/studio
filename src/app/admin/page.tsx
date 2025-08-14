@@ -137,9 +137,16 @@ export default function AdminPage() {
 
   const handleDriverFormSubmit = (data: Omit<Driver, '_id' | 'location' | 'rating' | 'createdAt' | 'vehicleImage'>, driverId?: string) => {
     if (driverId) {
-        const updatedDrivers = drivers.map(d =>
-            d._id === driverId ? { ...d, ...data } : d
-          );
+        const updatedDrivers = drivers.map(d => {
+            if (d._id === driverId) {
+              const updatedDriver = { ...d, ...data };
+              if (!data.password) {
+                updatedDriver.password = d.password; // Keep old password if new one is not provided
+              }
+              return updatedDriver;
+            }
+            return d;
+        });
       updateDriversStateAndStorage(updatedDrivers);
     } else {
       // Add new driver

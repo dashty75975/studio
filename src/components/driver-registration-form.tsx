@@ -28,7 +28,7 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format.'),
   email: z.string().email('Invalid email address.'),
-  licenseNumber: z.string().min(5, 'License number is too short.'),
+  password: z.string().min(8, 'Password must be at least 8 characters.'),
   vehicleType: z.enum(vehicleTypes, { required_error: 'Please select a vehicle type.' }),
   vehicleModel: z.string().min(2, 'Vehicle model is required.'),
   licensePlate: z.string().min(4, 'License plate is too short.'),
@@ -44,7 +44,7 @@ export default function DriverRegistrationForm() {
       name: '',
       phone: '',
       email: '',
-      licenseNumber: '',
+      password: '',
       vehicleModel: '',
       licensePlate: '',
       vehicleImage: undefined,
@@ -87,14 +87,14 @@ export default function DriverRegistrationForm() {
                 <FormField control={form.control} name="email" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Email Address</FormLabel>
-                        <FormControl><Input placeholder="you@example.com" {...field} /></FormControl>
+                        <FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
-                <FormField control={form.control} name="licenseNumber" render={({ field }) => (
+                <FormField control={form.control} name="password" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Driving License Number</FormLabel>
-                        <FormControl><Input placeholder="SUL12345" {...field} /></FormControl>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl><Input type="password" placeholder="********" {...field} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />
@@ -169,4 +169,3 @@ export default function DriverRegistrationForm() {
     </Form>
   );
 }
-

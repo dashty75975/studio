@@ -13,7 +13,7 @@ export interface Driver {
   name: string;
   phone: string;
   email: string;
-  licenseNumber: string;
+  password?: string; // Made optional for existing drivers
   vehicleType: VehicleType;
   vehicleModel: string;
   licensePlate: string;

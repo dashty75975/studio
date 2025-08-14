@@ -26,7 +26,7 @@ const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format.'),
   email: z.string().email('Invalid email address.'),
-  licenseNumber: z.string().min(5, 'License number is too short.'),
+  password: z.string().optional(),
   vehicleType: z.enum(vehicleTypes, { required_error: 'Please select a vehicle type.' }),
   vehicleModel: z.string().min(2, 'Vehicle model is required.'),
   licensePlate: z.string().min(4, 'License plate is too short.'),
@@ -48,7 +48,7 @@ export default function DriverForm({ driver, onSubmit }: DriverFormProps) {
       name: '',
       phone: '',
       email: '',
-      licenseNumber: '',
+      password: '',
       vehicleModel: '',
       licensePlate: '',
       isApproved: false,
@@ -62,7 +62,7 @@ export default function DriverForm({ driver, onSubmit }: DriverFormProps) {
         name: driver.name,
         phone: driver.phone,
         email: driver.email,
-        licenseNumber: driver.licenseNumber,
+        password: '', // Don't pre-fill password
         vehicleType: driver.vehicleType,
         vehicleModel: driver.vehicleModel,
         licensePlate: driver.licensePlate,
@@ -74,7 +74,7 @@ export default function DriverForm({ driver, onSubmit }: DriverFormProps) {
             name: '',
             phone: '',
             email: '',
-            licenseNumber: '',
+            password: '',
             vehicleModel: '',
             licensePlate: '',
             vehicleType: undefined,
@@ -113,10 +113,10 @@ export default function DriverForm({ driver, onSubmit }: DriverFormProps) {
                     <FormMessage />
                 </FormItem>
             )} />
-            <FormField control={form.control} name="licenseNumber" render={({ field }) => (
+            <FormField control={form.control} name="password" render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Driving License Number</FormLabel>
-                    <FormControl><Input placeholder="SUL12345" {...field} /></FormControl>
+                    <FormLabel>New Password (optional)</FormLabel>
+                    <FormControl><Input type="password" placeholder="Leave blank to keep current" {...field} /></FormControl>
                     <FormMessage />
                 </FormItem>
             )} />
