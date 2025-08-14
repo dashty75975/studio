@@ -108,6 +108,11 @@ export default function MapView() {
           gestureHandling={'greedy'}
           className="h-full w-full"
         >
+          {userLocation && (
+            <AdvancedMarker position={userLocation} title="Your Location">
+              <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
+            </AdvancedMarker>
+          )}
           {filteredDrivers.map((driver) => (
             <AdvancedMarker
               key={driver._id}
