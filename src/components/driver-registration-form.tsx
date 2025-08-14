@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
 
-const vehicleTypes = ['bus', 'taxi', 'truck', 'minibus', 'motorcycle'] as const;
+const vehicleTypes = ['bus', 'taxi', 'truck', 'motorcycle', 'vegetable', 'gas', 'flat_recovery'] as const;
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -105,7 +105,13 @@ export default function DriverRegistrationForm() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a vehicle type" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                {vehicleTypes.map(type => (<SelectItem key={type} value={type} className="capitalize">{type}</SelectItem>))}
+                                <SelectItem value="taxi" className="capitalize">Taxi</SelectItem>
+                                <SelectItem value="bus" className="capitalize">Bus</SelectItem>
+                                <SelectItem value="truck" className="capitalize">Truck</SelectItem>
+                                <SelectItem value="motorcycle" className="capitalize">Motorcycle</SelectItem>
+                                <SelectItem value="vegetable" className="capitalize">Vegetable</SelectItem>
+                                <SelectItem value="gas" className="capitalize">Gas</SelectItem>
+                                <SelectItem value="flat_recovery" className="capitalize">Flat Recovery</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />

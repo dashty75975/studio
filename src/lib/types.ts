@@ -1,4 +1,4 @@
-export type VehicleType = 'bus' | 'taxi' | 'truck' | 'minibus' | 'motorcycle';
+export type VehicleType = 'bus' | 'taxi' | 'truck' | 'motorcycle' | 'vegetable' | 'gas' | 'flat_recovery';
 
 export interface Driver {
   _id: string;

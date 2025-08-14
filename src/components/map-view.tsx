@@ -15,8 +15,10 @@ const vehicleColorMap: Record<VehicleType, string> = {
   bus: '#00BFFF',
   taxi: '#FFD700',
   truck: '#DC143C',
-  minibus: '#32CD32',
   motorcycle: '#FF8C00',
+  vegetable: '#228B22',
+  gas: '#FF4500',
+  flat_recovery: '#4682B4',
 };
 
 export default function MapView() {

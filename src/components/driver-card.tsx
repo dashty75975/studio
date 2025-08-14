@@ -7,8 +7,10 @@ const vehicleHintMap: Record<Driver['vehicleType'], string> = {
   taxi: 'car taxi',
   bus: 'bus transport',
   truck: 'truck delivery',
-  minibus: 'van minibus',
   motorcycle: 'motorcycle delivery',
+  vegetable: 'vegetable truck',
+  gas: 'gas cylinder',
+  flat_recovery: 'tow truck',
 };
 
 export default function DriverCard({ driver }: { driver: Driver }) {
@@ -24,7 +26,7 @@ export default function DriverCard({ driver }: { driver: Driver }) {
           data-ai-hint={vehicleHintMap[driver.vehicleType]}
         />
         <CardTitle className="pt-2 text-base">{driver.name}</CardTitle>
-        <CardDescription className="text-xs capitalize">{driver.vehicleType} - {driver.vehicleModel}</CardDescription>
+        <CardDescription className="text-xs capitalize">{driver.vehicleType.replace('_', ' ')} - {driver.vehicleModel}</CardDescription>
       </CardHeader>
       <CardContent className="p-2 pt-0 text-sm">
         <p className="text-muted-foreground text-xs">License: {driver.licensePlate}</p>
