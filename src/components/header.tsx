@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapIcon, UserPlus, ShieldCheck, ToggleRight } from 'lucide-react';
+import { MapIcon, UserPlus, ShieldCheck, LogIn } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -11,9 +11,9 @@ export default function Header() {
             <span className="font-bold sm:inline-block">SulyTrack</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm lg:gap-6">
-             <Link href="/driver-status" className="text-foreground/60 transition-colors hover:text-foreground/80 flex items-center gap-1">
-              <ToggleRight className="h-4 w-4" /> 
-              <span className="hidden sm:inline">Driver Status</span>
+             <Link href="/driver/login" className="text-foreground/60 transition-colors hover:text-foreground/80 flex items-center gap-1">
+              <LogIn className="h-4 w-4" /> 
+              <span className="hidden sm:inline">Driver Login</span>
             </Link>
             <Link href="/register" className="text-foreground/60 transition-colors hover:text-foreground/80 flex items-center gap-1">
               <UserPlus className="h-4 w-4" /> 
