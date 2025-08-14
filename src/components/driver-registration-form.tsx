@@ -18,8 +18,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from './ui/separator';
+import { vehicleCategories } from '@/lib/mock-data';
 
-const vehicleTypes = ['bus', 'taxi', 'truck', 'motorcycle', 'vegetable', 'gas', 'flat_recovery'] as const;
+const vehicleTypes = vehicleCategories.map(vc => vc.value).filter(v => v !== 'all') as [string, ...string[]];
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -105,13 +106,9 @@ export default function DriverRegistrationForm() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a vehicle type" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                <SelectItem value="taxi" className="capitalize">Taxi</SelectItem>
-                                <SelectItem value="bus" className="capitalize">Bus</SelectItem>
-                                <SelectItem value="truck" className="capitalize">Truck</SelectItem>
-                                <SelectItem value="motorcycle" className="capitalize">Motorcycle</SelectItem>
-                                <SelectItem value="vegetable" className="capitalize">Vegetable</SelectItem>
-                                <SelectItem value="gas" className="capitalize">Gas</SelectItem>
-                                <SelectItem value="flat_recovery" className="capitalize">Flat Recovery</SelectItem>
+                                {vehicleCategories.filter(cat => cat.value !== 'all').map(category => (
+                                    <SelectItem key={category.value} value={category.value} className="capitalize">{category.label}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                         <FormMessage />

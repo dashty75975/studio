@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import type { Driver, VehicleType } from '@/lib/types';
-import { mockDrivers } from '@/lib/mock-data';
+import { mockDrivers, vehicleCategories } from '@/lib/mock-data';
 import VehicleFilter from './vehicle-filter';
 import DriverCard from './driver-card';
 import { Loader2, Terminal } from 'lucide-react';
@@ -11,15 +11,12 @@ import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
-const vehicleColorMap: Record<VehicleType, string> = {
-  bus: '#00BFFF',
-  taxi: '#FFD700',
-  truck: '#DC143C',
-  motorcycle: '#FF8C00',
-  vegetable: '#228B22',
-  gas: '#FF4500',
-  flat_recovery: '#4682B4',
-};
+const vehicleColorMap = vehicleCategories.reduce((acc, category) => {
+  if(category.value !== 'all') {
+    acc[category.value] = category.color;
+  }
+  return acc;
+}, {} as Record<VehicleType, string>);
 
 export default function MapView() {
   const [allDrivers, setAllDrivers] = useState<Driver[]>([]);

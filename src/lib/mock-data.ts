@@ -1,4 +1,16 @@
-import type { Driver } from './types';
+import type { Driver, VehicleType } from './types';
+import { Car, Bus, Truck, Bike, Carrot, Fuel, Wrench, Grip } from 'lucide-react';
+
+export const vehicleCategories: { value: VehicleType | 'all'; label: string; icon: React.ElementType; color: string }[] = [
+    { value: 'all', label: 'All', icon: Grip, color: '#ffffff' },
+    { value: 'taxi', label: 'Taxi', icon: Car, color: '#FFD700' },
+    { value: 'bus', label: 'Bus', icon: Bus, color: '#00BFFF' },
+    { value: 'truck', label: 'Truck', icon: Truck, color: '#DC143C' },
+    { value: 'motorcycle', label: 'Motorcycle', icon: Bike, color: '#FF8C00' },
+    { value: 'vegetable', label: 'Vegetable', icon: Carrot, color: '#228B22' },
+    { value: 'gas', label: 'Gas', icon: Fuel, color: '#FF4500' },
+    { value: 'flat_recovery', label: 'Flat Recovery', icon: Wrench, color: '#4682B4' },
+];
 
 export const mockDrivers: Driver[] = [
   {
