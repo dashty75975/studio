@@ -10,8 +10,9 @@ import { vehicleCategories as initialVehicleCategories, mockDrivers } from "@/li
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import CategoryForm from '@/components/category-form';
+import DriverForm from '@/components/driver-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import type { VehicleCategory, Driver } from '@/lib/types';
+import type { VehicleCategory, Driver, VehicleType } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import * as LucideIcons from 'lucide-react';
 
@@ -26,7 +27,9 @@ export default function AdminPage() {
   const [categories, setCategories] = useState(initialVehicleCategories.filter(c => c.value !== 'all'));
   const [drivers, setDrivers] = useState(mockDrivers);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [driverDialogOpen, setDriverDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<VehicleCategory | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   const handleAddCategoryClick = () => {
     setSelectedCategory(null);
@@ -53,21 +56,51 @@ export default function AdminPage() {
     };
 
     if (selectedCategory) {
-      // Update existing category
       setCategories(categories.map(c => 
         c.value === selectedCategory.value ? newOrUpdatedCategory : c
       ));
     } else {
-      // Add new category
       setCategories([...categories, newOrUpdatedCategory]);
     }
     setCategoryDialogOpen(false);
     setSelectedCategory(null);
   };
   
+  const handleAddDriverClick = () => {
+    setSelectedDriver(null);
+    setDriverDialogOpen(true);
+  }
+
+  const handleEditDriverClick = (driver: Driver) => {
+    setSelectedDriver(driver);
+    setDriverDialogOpen(true);
+  }
+
   const handleDeleteDriver = (driverId: string) => {
     setDrivers(drivers.filter(d => d._id !== driverId));
   }
+
+  const handleDriverFormSubmit = (data: Omit<Driver, '_id' | 'location' | 'rating' | 'createdAt' | 'vehicleImage'>, driverId?: string) => {
+    if (driverId) {
+      // Update existing driver
+      setDrivers(drivers.map(d =>
+        d._id === driverId ? { ...d, ...data } : d
+      ));
+    } else {
+      // Add new driver
+      const newDriver: Driver = {
+        ...data,
+        _id: (Math.random() * 10000).toString(),
+        location: { type: 'Point', coordinates: [45.4333, 35.5642] }, // Default location
+        rating: 5,
+        createdAt: new Date().toISOString(),
+        vehicleImage: 'https://placehold.co/300x200.png',
+      };
+      setDrivers([...drivers, newDriver]);
+    }
+    setDriverDialogOpen(false);
+    setSelectedDriver(null);
+  };
 
 
   return (
@@ -79,6 +112,7 @@ export default function AdminPage() {
       <div className="grid gap-8">
         
         {/* Driver Management */}
+        <Dialog open={driverDialogOpen} onOpenChange={setDriverDialogOpen}>
         <Card className="max-w-6xl mx-auto w-full">
           <CardHeader>
              <div className="flex items-center justify-between">
@@ -86,10 +120,12 @@ export default function AdminPage() {
                   <CardTitle>Driver Management</CardTitle>
                   <CardDescription>View, edit, and manage all registered drivers.</CardDescription>
                 </div>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Add Driver
-                </Button>
+                <DialogTrigger asChild>
+                  <Button onClick={handleAddDriverClick}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Driver
+                  </Button>
+                </DialogTrigger>
               </div>
           </CardHeader>
           <CardContent>
@@ -112,7 +148,7 @@ export default function AdminPage() {
                       <TableCell>{driver.licensePlate}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Badge variant={driver.isApproved ? 'default' : 'destructive'} className="bg-green-600 hover:bg-green-700">
+                          <Badge variant={driver.isApproved ? 'default' : 'destructive'} className={driver.isApproved ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}>
                             {driver.isApproved ? 'Approved' : 'Pending'}
                           </Badge>
                           <Badge variant={driver.isAvailable ? 'default' : 'secondary'}>
@@ -130,10 +166,12 @@ export default function AdminPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
+                            <DialogTrigger asChild>
+                                <DropdownMenuItem onClick={() => handleEditDriverClick(driver)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                                </DropdownMenuItem>
+                            </DialogTrigger>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -164,6 +202,17 @@ export default function AdminPage() {
              </Table>
           </CardContent>
         </Card>
+        <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+                <DialogTitle>{selectedDriver ? 'Edit' : 'Add'} Driver</DialogTitle>
+            </DialogHeader>
+            <DriverForm
+                driver={selectedDriver}
+                onSubmit={handleDriverFormSubmit}
+            />
+        </DialogContent>
+        </Dialog>
+
 
         {/* Category Management */}
         <Card className="max-w-4xl mx-auto w-full">
