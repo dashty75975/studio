@@ -119,14 +119,14 @@ export default function MapView() {
 
   return (
     <APIProvider apiKey={apiKey}>
-      <div className="relative h-full w-full">
+      <div className="h-full w-full">
         <Map
-          center={userLocation}
-          zoom={13}
+          defaultCenter={userLocation}
+          defaultZoom={13}
           mapId="sulytrack-map"
           disableDefaultUI={false}
           gestureHandling={'greedy'}
-          style={{width: '100%', height: '100%'}}
+          className="h-full w-full"
         >
           {userLocation && (
             <AdvancedMarker position={userLocation} title="Your Location">
