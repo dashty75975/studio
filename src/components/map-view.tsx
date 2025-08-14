@@ -6,12 +6,11 @@ import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react
 import type { Driver, VehicleCategory, VehicleType } from '@/lib/types';
 import VehicleFilter from './vehicle-filter';
 import DriverCard from './driver-card';
-import { Loader2, Terminal, Grip } from 'lucide-react';
+import { Loader2, Terminal, Grip, PlusCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import * as LucideIcons from 'lucide-react';
-import { PlusCircle } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
@@ -83,24 +82,9 @@ export default function MapView() {
         setAllDrivers(driversFromDb);
     });
 
-    // Simulate real-time movement for demo purposes
-    const interval = setInterval(() => {
-      setAllDrivers(prevDrivers => prevDrivers.map(d => ({
-        ...d,
-        location: {
-          ...d.location,
-          coordinates: [
-            d.location.coordinates[0] + (Math.random() - 0.5) * 0.001,
-            d.location.coordinates[1] + (Math.random() - 0.5) * 0.001
-          ]
-        }
-      })));
-    }, 5000);
-
     return () => {
         categoryUnsubscribe();
         driverUnsubscribe();
-        clearInterval(interval);
     };
   }, []);
 
