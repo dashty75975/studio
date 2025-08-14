@@ -20,7 +20,7 @@ const vehicleInfoMap = vehicleCategories.reduce((acc, category) => {
     };
   }
   return acc;
-}, {} as Record<VehicleType, { color: string; icon: React.ElementType }>);
+}, {} as Record<string, { color: string; icon: React.ElementType }>);
 
 
 export default function MapView() {
@@ -108,7 +108,7 @@ export default function MapView() {
           center={userLocation}
           zoom={13}
           mapId="sulytrack-map"
-          disableDefaultUI={true}
+          disableDefaultUI={false}
           gestureHandling={'greedy'}
           className="h-full w-full"
         >
@@ -118,7 +118,7 @@ export default function MapView() {
             </AdvancedMarker>
           )}
           {filteredDrivers.map((driver) => {
-            const vehicleInfo = vehicleInfoMap[driver.vehicleType];
+            const vehicleInfo = vehicleInfoMap[driver.vehicleType as VehicleType];
             const Icon = vehicleInfo?.icon || Pin;
             const color = vehicleInfo?.color || '#333';
 
