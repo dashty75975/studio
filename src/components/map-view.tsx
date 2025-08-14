@@ -6,7 +6,7 @@ import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react
 import type { Driver, VehicleCategory, VehicleType } from '@/lib/types';
 import VehicleFilter from './vehicle-filter';
 import DriverCard from './driver-card';
-import { Loader2, Terminal } from 'lucide-react';
+import { Loader2, Terminal, Grip } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import * as LucideIcons from 'lucide-react';
 import { PlusCircle } from 'lucide-react';
