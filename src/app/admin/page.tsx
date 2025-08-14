@@ -82,7 +82,6 @@ export default function AdminPage() {
 
   const handleDriverFormSubmit = (data: Omit<Driver, '_id' | 'location' | 'rating' | 'createdAt' | 'vehicleImage'>, driverId?: string) => {
     if (driverId) {
-      // Update existing driver
       setDrivers(drivers.map(d =>
         d._id === driverId ? { ...d, ...data } : d
       ));
@@ -166,10 +165,12 @@ export default function AdminPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => handleEditDriverClick(driver)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                            </DropdownMenuItem>
+                            <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={() => handleEditDriverClick(driver)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                </DropdownMenuItem>
+                            </DialogTrigger>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -308,3 +309,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
