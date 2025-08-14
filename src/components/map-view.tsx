@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -11,12 +12,16 @@ import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
-const vehicleColorMap = vehicleCategories.reduce((acc, category) => {
+const vehicleInfoMap = vehicleCategories.reduce((acc, category) => {
   if(category.value !== 'all') {
-    acc[category.value] = category.color;
+    acc[category.value] = {
+      color: category.color,
+      icon: category.icon,
+    };
   }
   return acc;
-}, {} as Record<VehicleType, string>);
+}, {} as Record<VehicleType, { color: string; icon: React.ElementType }>);
+
 
 export default function MapView() {
   const [allDrivers, setAllDrivers] = useState<Driver[]>([]);
@@ -112,24 +117,35 @@ export default function MapView() {
               <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
             </AdvancedMarker>
           )}
-          {filteredDrivers.map((driver) => (
-            <AdvancedMarker
-              key={driver._id}
-              position={{ lat: driver.location.coordinates[1], lng: driver.location.coordinates[0] }}
-              onClick={() => setSelectedDriver(driver)}
-            >
-              {driver.vehicleType === 'bus' ? (
-                <div className="flex flex-col items-center">
-                  <div className="bg-background text-foreground text-xs font-bold px-2 py-1 rounded-md shadow-md -translate-y-2">
-                    {driver.licensePlate}
+          {filteredDrivers.map((driver) => {
+            const vehicleInfo = vehicleInfoMap[driver.vehicleType];
+            const Icon = vehicleInfo?.icon || Pin;
+            const color = vehicleInfo?.color || '#333';
+
+            return (
+              <AdvancedMarker
+                key={driver._id}
+                position={{ lat: driver.location.coordinates[1], lng: driver.location.coordinates[0] }}
+                onClick={() => setSelectedDriver(driver)}
+              >
+                <div className="relative group">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: color }}
+                  >
+                    <Icon className="w-5 h-5 text-white" />
                   </div>
-                  <Pin background={vehicleColorMap[driver.vehicleType]} glyphColor="#fff" borderColor={vehicleColorMap[driver.vehicleType]} />
+                  {driver.vehicleType === 'bus' && (
+                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap">
+                       <div className="bg-background text-foreground text-xs font-bold px-2 py-1 rounded-md shadow-md">
+                         {driver.licensePlate}
+                       </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <Pin background={vehicleColorMap[driver.vehicleType]} glyphColor="#fff" borderColor={vehicleColorMap[driver.vehicleType]} />
-              )}
-            </AdvancedMarker>
-          ))}
+              </AdvancedMarker>
+            )
+          })}
           {selectedDriver && (
             <InfoWindow
               position={{ lat: selectedDriver.location.coordinates[1] + 0.002, lng: selectedDriver.location.coordinates[0] }}
