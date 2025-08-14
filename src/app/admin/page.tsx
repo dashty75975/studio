@@ -2,10 +2,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { PlusCircle, MoreHorizontal, Trash2, Edit } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Trash2, Edit, LogOut } from "lucide-react";
 import { vehicleCategories as initialVehicleCategories } from "@/lib/mock-data";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -17,6 +18,8 @@ import { Badge } from '@/components/ui/badge';
 import * as LucideIcons from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+
+const ADMIN_LOGGED_IN_KEY = 'sulytrack_admin_logged_in';
 
 const getIconComponent = (iconName: string) => {
   const Icon = (LucideIcons as any)[iconName] || PlusCircle;
@@ -35,6 +38,14 @@ export default function AdminPage() {
   const [driverDialogOpen, setDriverDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<VehicleCategory | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY);
+    if (isAdminLoggedIn !== 'true') {
+      router.push('/admin/login');
+    }
+  }, [router]);
 
   // Fetch data from Firestore
   const fetchCategories = async () => {
@@ -67,10 +78,17 @@ export default function AdminPage() {
   };
   
   useEffect(() => {
-    fetchCategories();
-    fetchDrivers();
+    const isAdminLoggedIn = localStorage.getItem(ADMIN_LOGGED_IN_KEY);
+    if (isAdminLoggedIn === 'true') {
+        fetchCategories();
+        fetchDrivers();
+    }
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem(ADMIN_LOGGED_IN_KEY);
+    router.push('/admin/login');
+  };
 
   const handleAddCategoryClick = () => {
     setSelectedCategory(null);
@@ -148,9 +166,13 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto py-12">
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 relative">
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
         <p className="text-muted-foreground">Manage drivers, categories, and view live tracking.</p>
+        <Button variant="outline" size="sm" onClick={handleLogout} className="absolute top-0 right-0">
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </Button>
       </div>
       <div className="grid gap-8">
         
