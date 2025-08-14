@@ -110,7 +110,7 @@ export default function MapView() {
           mapId="sulytrack-map"
           disableDefaultUI={false}
           gestureHandling={'greedy'}
-          className="h-full w-full"
+          style={{width: '100%', height: '100%'}}
         >
           {userLocation && (
             <AdvancedMarker position={userLocation} title="Your Location">
