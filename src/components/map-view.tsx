@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -10,6 +11,7 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import * as LucideIcons from 'lucide-react';
 import VehicleFilter from './vehicle-filter';
+import { vehicleCategories as mockVehicleCategories } from '@/lib/mock-data';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
@@ -28,8 +30,16 @@ export default function MapView() {
   const [allDrivers, setAllDrivers] = useState<Driver[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [currentVehicleCategories, setCurrentVehicleCategories] = useState<VehicleCategory[]>([]);
   const [selectedVehicleType, setSelectedVehicleType] = useState('all');
+
+  const currentVehicleCategories: VehicleCategory[] = useMemo(() => {
+    const allCategory: VehicleCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
+    const categoriesFromMock = mockVehicleCategories.map(c => ({
+      ...c,
+      value: c.value as string,
+    }));
+    return [allCategory, ...categoriesFromMock];
+  }, []);
 
   useEffect(() => {
     // Set user location
@@ -60,20 +70,8 @@ export default function MapView() {
         setAllDrivers(driversFromDb);
     });
 
-     // Subscribe to category updates
-    const categoryUnsubscribe = onSnapshot(collection(db, "categories"), (querySnapshot) => {
-        const categoriesFromDb = querySnapshot.docs.map(doc => ({
-            ...doc.data(),
-            value: doc.id,
-            icon: getIconComponent(doc.data().iconName),
-        })) as VehicleCategory[];
-        const allCategory: VehicleCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
-        setCurrentVehicleCategories([allCategory, ...categoriesFromDb]);
-    });
-
     return () => {
         driverUnsubscribe();
-        categoryUnsubscribe();
     };
   }, []);
 
@@ -88,7 +86,7 @@ export default function MapView() {
     const map = new Map<string, { icon: React.ElementType, color: string }>();
     currentVehicleCategories.forEach(cat => {
       if (cat.value !== 'all') {
-        map.set(cat.value as string, { icon: cat.icon, color: cat.color });
+        map.set(cat.value, { icon: cat.icon, color: cat.color });
       }
     });
     return map;
