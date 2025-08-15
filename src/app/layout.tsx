@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'REGA',
+  title: 'SulyTrack',
   description: 'Real-time vehicle tracking in Sulaymaniyah.',
 };
 

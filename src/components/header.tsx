@@ -8,7 +8,7 @@ export default function Header() {
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <MapIcon className="h-6 w-6 text-primary" />
-            <span className="font-bold sm:inline-block">REGA</span>
+            <span className="font-bold sm:inline-block">SulyTrack</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm lg:gap-6">
              <Link href="/driver/login" className="text-foreground/60 transition-colors hover:text-foreground/80 flex items-center gap-1">

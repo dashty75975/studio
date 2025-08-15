@@ -12,7 +12,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import type { Driver } from '@/lib/types';
 
-const LOGGED_IN_DRIVER_KEY = 'rega_logged_in_driver';
+const LOGGED_IN_DRIVER_KEY = 'suly_logged_in_driver';
 
 export default function DriverLoginPage() {
   const [email, setEmail] = useState('');
