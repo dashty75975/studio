@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { Grip } from "lucide-react";
 
 interface VehicleFilterProps {
   categories: VehicleCategory[];
@@ -19,14 +19,16 @@ interface VehicleFilterProps {
 
 export default function VehicleFilter({ categories, selectedType, onSelectType }: VehicleFilterProps) {
   const selectedCategory = categories.find(c => c.value === selectedType);
-  const SelectedIcon = selectedCategory?.icon;
+  const SelectedIcon = selectedCategory?.icon || Grip;
 
   return (
     <Select value={selectedType} onValueChange={onSelectType}>
       <SelectTrigger className="w-[280px] capitalize">
         <div className="flex items-center gap-2">
-          {SelectedIcon && <SelectedIcon className="w-4 h-4" />}
-          <SelectValue placeholder="Select a vehicle type" />
+          <SelectedIcon className="w-4 h-4" />
+          <SelectValue>
+            {selectedCategory?.label || "Select a vehicle type"}
+          </SelectValue>
         </div>
       </SelectTrigger>
       <SelectContent>
