@@ -1,21 +1,36 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
-import type { Driver } from '@/lib/types';
+import type { Driver, VehicleCategory } from '@/lib/types';
 import DriverCard from './driver-card';
-import { Loader2, Terminal } from 'lucide-react';
+import { Loader2, Terminal, Grip } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import * as LucideIcons from 'lucide-react';
+import VehicleFilter from './vehicle-filter';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
+
+const getIconComponent = (iconName: string): React.ElementType => {
+  const Icon = (LucideIcons as any)[iconName];
+  if (Icon) {
+    if (!Icon.displayName) {
+      Icon.displayName = iconName;
+    }
+    return Icon;
+  }
+  return Grip;
+};
 
 export default function MapView() {
   const [allDrivers, setAllDrivers] = useState<Driver[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
+  const [currentVehicleCategories, setCurrentVehicleCategories] = useState<VehicleCategory[]>([]);
+  const [selectedVehicleType, setSelectedVehicleType] = useState('all');
 
   useEffect(() => {
     // Set user location
@@ -38,20 +53,47 @@ export default function MapView() {
 
     // Subscribe to all available & approved driver updates
     const driversRef = collection(db, "drivers");
-    const q = query(driversRef, where("isApproved", "==", true), where("isAvailable", "==", true));
+    const q = query(driversRef);
     const driverUnsubscribe = onSnapshot(q, (querySnapshot) => {
-        const driversFromDb = querySnapshot.docs.map(doc => ({
-            _id: doc.id,
-            ...doc.data(),
-        })) as Driver[];
+        const driversFromDb = querySnapshot.docs
+            .map(doc => ({ _id: doc.id, ...doc.data() } as Driver))
+            .filter(driver => driver.isApproved && driver.isAvailable); // Filter for approved and available drivers
         setAllDrivers(driversFromDb);
+    });
+
+     // Subscribe to category updates
+    const categoryUnsubscribe = onSnapshot(collection(db, "categories"), (querySnapshot) => {
+        const categoriesFromDb = querySnapshot.docs.map(doc => ({
+            ...doc.data(),
+            value: doc.id,
+            icon: getIconComponent(doc.data().iconName),
+        })) as VehicleCategory[];
+        const allCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
+        setCurrentVehicleCategories([allCategory, ...categoriesFromDb]);
     });
 
     return () => {
         driverUnsubscribe();
+        categoryUnsubscribe();
     };
   }, []);
 
+  const filteredDrivers = useMemo(() => {
+    if (selectedVehicleType === 'all') {
+      return allDrivers;
+    }
+    return allDrivers.filter(driver => driver.vehicleType === selectedVehicleType);
+  }, [allDrivers, selectedVehicleType]);
+
+  const vehicleInfoMap = useMemo(() => {
+    const map = new Map<string, { icon: React.ElementType, color: string }>();
+    currentVehicleCategories.forEach(cat => {
+      if (cat.value !== 'all') {
+        map.set(cat.value, { icon: cat.icon, color: cat.color });
+      }
+    });
+    return map;
+  }, [currentVehicleCategories]);
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -81,6 +123,15 @@ export default function MapView() {
   return (
     <APIProvider apiKey={apiKey}>
       <div className="h-full w-full relative">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-full px-4">
+            <div className="p-2 rounded-lg bg-background/80 backdrop-blur-sm max-w-2xl mx-auto shadow-lg">
+                <VehicleFilter
+                categories={currentVehicleCategories}
+                selectedType={selectedVehicleType}
+                onSelectType={setSelectedVehicleType}
+                />
+            </div>
+        </div>
         <Map
           defaultCenter={userLocation}
           defaultZoom={13}
@@ -94,15 +145,21 @@ export default function MapView() {
               <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
             </AdvancedMarker>
           )}
-          {allDrivers.map((driver) => (
-              <AdvancedMarker
-                key={driver._id}
-                position={{ lat: driver.location.coordinates[1], lng: driver.location.coordinates[0] }}
-                onClick={() => setSelectedDriver(driver)}
-              >
-                <Pin />
-              </AdvancedMarker>
-            )
+          {filteredDrivers.map((driver) => {
+              const vehicleInfo = vehicleInfoMap.get(driver.vehicleType);
+              const CustomIcon = vehicleInfo?.icon || Pin;
+              return (
+                <AdvancedMarker
+                  key={driver._id}
+                  position={{ lat: driver.location.coordinates[1], lng: driver.location.coordinates[0] }}
+                  onClick={() => setSelectedDriver(driver)}
+                >
+                  <div className="p-2 bg-background rounded-full shadow-md">
+                     <CustomIcon style={{ color: vehicleInfo?.color || '#000000' }} className="w-5 h-5" />
+                  </div>
+                </AdvancedMarker>
+              )
+            }
           )}
           {selectedDriver && (
             <InfoWindow
