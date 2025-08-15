@@ -4,9 +4,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import type { Driver, VehicleCategory, VehicleType } from '@/lib/types';
-import VehicleFilter from './vehicle-filter';
 import DriverCard from './driver-card';
-import { Loader2, Terminal, Grip, PlusCircle } from 'lucide-react';
+import { Loader2, Terminal, PlusCircle, Grip } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import * as LucideIcons from 'lucide-react';
 import { db } from '@/lib/firebase';
@@ -23,20 +22,19 @@ const getIconComponent = (iconName: string) => {
 export default function MapView() {
   const [allDrivers, setAllDrivers] = useState<Driver[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [vehicleType, setVehicleType] = useState<VehicleType | 'all'>('all');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [currentVehicleCategories, setCurrentVehicleCategories] = useState<VehicleCategory[]>([]);
   
   const vehicleInfoMap = useMemo(() => {
     return currentVehicleCategories.reduce((acc, category) => {
         if(category.value !== 'all') {
-            acc[category.value] = {
+            acc[category.value as VehicleType] = {
             color: category.color,
             icon: category.icon,
             };
         }
         return acc;
-    }, {} as Record<string, { color: string; icon: React.ElementType }>);
+    }, {} as Record<VehicleType, { color: string; icon: React.ElementType }>);
   }, [currentVehicleCategories]);
 
 
@@ -62,14 +60,13 @@ export default function MapView() {
     // Subscribe to category updates
     const categoryUnsubscribe = onSnapshot(collection(db, "categories"), (querySnapshot) => {
         const categoriesFromDb = querySnapshot.docs.map(doc => ({
-            value: doc.data().value,
+            value: doc.id,
             label: doc.data().label,
             color: doc.data().color,
             iconName: doc.data().iconName,
             icon: getIconComponent(doc.data().iconName),
         })) as VehicleCategory[];
-        const allCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
-        setCurrentVehicleCategories([allCategory, ...categoriesFromDb]);
+        setCurrentVehicleCategories(categoriesFromDb);
     });
     
     // Subscribe to all available & approved driver updates
@@ -88,14 +85,6 @@ export default function MapView() {
         driverUnsubscribe();
     };
   }, []);
-  
-  // Filter drivers based on vehicleType. This is derived state.
-  const filteredDrivers = useMemo(() => {
-    if (vehicleType === 'all') {
-      return allDrivers;
-    }
-    return allDrivers.filter(driver => driver.vehicleType === vehicleType);
-  }, [allDrivers, vehicleType]);
 
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -139,7 +128,7 @@ export default function MapView() {
               <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
             </AdvancedMarker>
           )}
-          {filteredDrivers.map((driver) => {
+          {allDrivers.map((driver) => {
             const vehicleInfo = vehicleInfoMap[driver.vehicleType as VehicleType];
             const Icon = vehicleInfo?.icon || Pin;
             const color = vehicleInfo?.color || '#333';
@@ -178,7 +167,6 @@ export default function MapView() {
             </InfoWindow>
           )}
         </Map>
-        <VehicleFilter vehicleCategories={currentVehicleCategories} vehicleType={vehicleType} setVehicleType={setVehicleType} />
       </div>
     </APIProvider>
   );

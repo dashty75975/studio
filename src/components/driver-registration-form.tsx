@@ -23,7 +23,7 @@ import { Switch } from './ui/switch';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-const vehicleTypes = vehicleCategories.map(vc => vc.value).filter(v => v !== 'all') as [string, ...string[]];
+const vehicleTypes = vehicleCategories.map(vc => vc.value) as [string, ...string[]];
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -131,7 +131,7 @@ export default function DriverRegistrationForm() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a vehicle type" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                {vehicleCategories.filter(cat => cat.value !== 'all').map(category => (
+                                {vehicleCategories.map(category => (
                                     <SelectItem key={category.value} value={category.value} className="capitalize">{category.label}</SelectItem>
                                 ))}
                             </SelectContent>

@@ -1,9 +1,8 @@
 
 import type { VehicleCategory } from './types';
-import { Car, Bus, Truck, Bike, Carrot, Fuel, Wrench, Grip } from 'lucide-react';
+import { Car, Bus, Truck, Bike, Carrot, Fuel, Wrench } from 'lucide-react';
 
 export const vehicleCategories: Omit<VehicleCategory, 'icon'> & { icon: React.ElementType, iconName: string }[] = [
-    { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' },
     { value: 'taxi', label: 'Taxi', icon: Car, color: '#FFD700', iconName: 'Car' },
     { value: 'bus', label: 'Bus', icon: Bus, color: '#00BFFF', iconName: 'Bus' },
     { value: 'truck', label: 'Truck', icon: Truck, color: '#DC143C', iconName: 'Truck' },
