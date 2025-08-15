@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -68,7 +67,7 @@ export default function MapView() {
             value: doc.id,
             icon: getIconComponent(doc.data().iconName),
         })) as VehicleCategory[];
-        const allCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
+        const allCategory: VehicleCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
         setCurrentVehicleCategories([allCategory, ...categoriesFromDb]);
     });
 
