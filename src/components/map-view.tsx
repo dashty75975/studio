@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
+import { APIProvider, Map as GoogleMap, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
 import type { Driver, VehicleCategory } from '@/lib/types';
 import DriverCard from './driver-card';
 import { Loader2, Terminal, Grip } from 'lucide-react';
@@ -89,7 +89,7 @@ export default function MapView() {
     const map = new Map<string, { icon: React.ElementType, color: string }>();
     currentVehicleCategories.forEach(cat => {
       if (cat.value !== 'all') {
-        map.set(cat.value, { icon: cat.icon, color: cat.color });
+        map.set(cat.value as string, { icon: cat.icon, color: cat.color });
       }
     });
     return map;
@@ -132,7 +132,7 @@ export default function MapView() {
                 />
             </div>
         </div>
-        <Map
+        <GoogleMap
           defaultCenter={userLocation}
           defaultZoom={13}
           mapId="suly-track-map"
@@ -170,7 +170,7 @@ export default function MapView() {
               <DriverCard driver={selectedDriver} />
             </InfoWindow>
           )}
-        </Map>
+        </GoogleMap>
       </div>
     </APIProvider>
   );
