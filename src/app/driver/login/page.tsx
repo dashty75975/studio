@@ -44,13 +44,18 @@ export default function DriverLoginPage() {
             return;
         }
 
-        const driverDoc = querySnapshot.docs[0];
-        const driver = { _id: driverDoc.id, ...driverDoc.data() } as Driver;
+        let loggedIn = false;
+        for (const doc of querySnapshot.docs) {
+            const driver = { _id: doc.id, ...doc.data() } as Driver;
+            if (driver.password === password) {
+                localStorage.setItem(LOGGED_IN_DRIVER_KEY, driver._id);
+                router.push('/driver/dashboard');
+                loggedIn = true;
+                break;
+            }
+        }
 
-        if (driver.password === password) {
-            localStorage.setItem(LOGGED_IN_DRIVER_KEY, driver._id);
-            router.push('/driver/dashboard');
-        } else {
+        if (!loggedIn) {
             toast({
                 variant: "destructive",
                 title: "Login Failed",
