@@ -23,14 +23,16 @@ import { Switch } from './ui/switch';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-const vehicleTypes = vehicleCategories.map(vc => vc.value) as [string, ...string[]];
+const registrationVehicleCategories = vehicleCategories.filter(vc => vc.value !== 'all');
+const vehicleTypeValues = registrationVehicleCategories.map(vc => vc.value) as [string, ...string[]];
+
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format.'),
   email: z.string().email('Invalid email address.'),
   password: z.string().min(8, 'Password must be at least 8 characters.'),
-  vehicleType: z.enum(vehicleTypes, { required_error: 'Please select a vehicle type.' }),
+  vehicleType: z.enum(vehicleTypeValues, { required_error: 'Please select a vehicle type.' }),
   vehicleModel: z.string().min(2, 'Vehicle model is required.'),
   licensePlate: z.string().min(4, 'License plate is too short.'),
   // vehicleImage: z.any().refine((files) => files?.length === 1, 'Vehicle image is required.'),
@@ -50,7 +52,6 @@ export default function DriverRegistrationForm() {
       password: '',
       vehicleModel: '',
       licensePlate: '',
-      // vehicleImage: undefined,
       isAvailable: true,
     },
   });
@@ -82,8 +83,6 @@ export default function DriverRegistrationForm() {
       });
     }
   }
-
-  // const fileRef = form.register("vehicleImage");
 
   return (
     <Form {...form}>
@@ -131,8 +130,8 @@ export default function DriverRegistrationForm() {
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger><SelectValue placeholder="Select a vehicle type" /></SelectTrigger></FormControl>
                             <SelectContent>
-                                {vehicleCategories.map(category => (
-                                    <SelectItem key={category.value} value={category.value} className="capitalize">{category.label}</SelectItem>
+                                {registrationVehicleCategories.map(category => (
+                                    <SelectItem key={category.value} value={category.value as string} className="capitalize">{category.label}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
