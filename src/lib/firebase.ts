@@ -3,11 +3,11 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  projectId: 'sulytrack',
+  projectId: 'rega',
   appId: '1:788285498054:web:54bc5d68c9f49c215c2dc7',
-  storageBucket: 'sulytrack.firebasestorage.app',
+  storageBucket: 'rega.firebasestorage.app',
   apiKey: 'AIzaSyBWZkcabbP4iE5wprxQdn-QiCD6ZxMzevI',
-  authDomain: 'sulytrack.firebaseapp.com',
+  authDomain: 'rega.firebaseapp.com',
   measurementId: '',
   messagingSenderId: '788285498054',
 };
