@@ -1,42 +1,21 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
-import type { Driver, VehicleCategory, VehicleType } from '@/lib/types';
+import type { Driver } from '@/lib/types';
 import DriverCard from './driver-card';
-import { Loader2, Terminal, PlusCircle, Grip } from 'lucide-react';
+import { Loader2, Terminal } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
-import * as LucideIcons from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
-const getIconComponent = (iconName: string) => {
-  const Icon = (LucideIcons as any)[iconName] || PlusCircle;
-  return Icon;
-};
-
-
 export default function MapView() {
   const [allDrivers, setAllDrivers] = useState<Driver[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
-  const [currentVehicleCategories, setCurrentVehicleCategories] = useState<VehicleCategory[]>([]);
-  
-  const vehicleInfoMap = useMemo(() => {
-    return currentVehicleCategories.reduce((acc, category) => {
-        if(category.value !== 'all') {
-            acc[category.value as VehicleType] = {
-            color: category.color,
-            icon: category.icon,
-            };
-        }
-        return acc;
-    }, {} as Record<VehicleType, { color: string; icon: React.ElementType }>);
-  }, [currentVehicleCategories]);
-
 
   useEffect(() => {
     // Set user location
@@ -57,18 +36,6 @@ export default function MapView() {
         setUserLocation(SULAYMANIYAH_COORDS); // Fallback for browsers without geolocation
     }
 
-    // Subscribe to category updates
-    const categoryUnsubscribe = onSnapshot(collection(db, "categories"), (querySnapshot) => {
-        const categoriesFromDb = querySnapshot.docs.map(doc => ({
-            value: doc.id,
-            label: doc.data().label,
-            color: doc.data().color,
-            iconName: doc.data().iconName,
-            icon: getIconComponent(doc.data().iconName),
-        })) as VehicleCategory[];
-        setCurrentVehicleCategories(categoriesFromDb);
-    });
-    
     // Subscribe to all available & approved driver updates
     const driversRef = collection(db, "drivers");
     const q = query(driversRef, where("isApproved", "==", true), where("isAvailable", "==", true));
@@ -81,7 +48,6 @@ export default function MapView() {
     });
 
     return () => {
-        categoryUnsubscribe();
         driverUnsubscribe();
     };
   }, []);
@@ -103,7 +69,7 @@ export default function MapView() {
     );
   }
 
-  if (!userLocation || currentVehicleCategories.length === 0) {
+  if (!userLocation) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-muted">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -128,35 +94,16 @@ export default function MapView() {
               <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
             </AdvancedMarker>
           )}
-          {allDrivers.map((driver) => {
-            const vehicleInfo = vehicleInfoMap[driver.vehicleType as VehicleType];
-            const Icon = vehicleInfo?.icon || Pin;
-            const color = vehicleInfo?.color || '#333';
-
-            return (
+          {allDrivers.map((driver) => (
               <AdvancedMarker
                 key={driver._id}
                 position={{ lat: driver.location.coordinates[1], lng: driver.location.coordinates[0] }}
                 onClick={() => setSelectedDriver(driver)}
               >
-                <div className="relative group">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: color }}
-                  >
-                    <Icon className="w-5 h-5 text-white" />
-                  </div>
-                  {driver.vehicleType === 'bus' && (
-                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap">
-                       <div className="bg-background text-foreground text-xs font-bold px-2 py-1 rounded-md shadow-md">
-                         {driver.licensePlate}
-                       </div>
-                    </div>
-                  )}
-                </div>
+                <Pin />
               </AdvancedMarker>
             )
-          })}
+          )}
           {selectedDriver && (
             <InfoWindow
               position={{ lat: selectedDriver.location.coordinates[1] + 0.002, lng: selectedDriver.location.coordinates[0] }}
