@@ -39,7 +39,7 @@ export default function DriverLoginPage() {
             toast({
                 variant: "destructive",
                 title: "Login Failed",
-                description: "Invalid email or password, or your account is not approved.",
+                description: "Invalid email or your account is not approved.",
             });
             return;
         }
@@ -54,7 +54,7 @@ export default function DriverLoginPage() {
             toast({
                 variant: "destructive",
                 title: "Login Failed",
-                description: "Invalid email or password, or your account is not approved.",
+                description: "Invalid password.",
             });
         }
     } catch (error) {

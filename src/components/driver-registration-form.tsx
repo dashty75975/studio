@@ -35,7 +35,6 @@ const formSchema = z.object({
   vehicleType: z.enum(vehicleTypeValues, { required_error: 'Please select a vehicle type.' }),
   vehicleModel: z.string().min(2, 'Vehicle model is required.'),
   licensePlate: z.string().min(4, 'License plate is too short.'),
-  // vehicleImage: z.any().refine((files) => files?.length === 1, 'Vehicle image is required.'),
   isAvailable: z.boolean().default(false),
 });
 
