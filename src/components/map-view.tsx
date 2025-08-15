@@ -10,7 +10,7 @@ import { Loader2, Terminal, Grip, PlusCircle } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import * as LucideIcons from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
@@ -79,18 +79,16 @@ export default function MapView() {
 
   useEffect(() => {
     const driversRef = collection(db, "drivers");
-    let q;
-    
-    if (vehicleType === 'all') {
-        q = query(driversRef, where("isApproved", "==", true), where("isAvailable", "==", true));
-    } else {
-        q = query(
-            driversRef, 
-            where("isApproved", "==", true), 
-            where("isAvailable", "==", true),
-            where("vehicleType", "==", vehicleType)
-        );
+    const conditions = [
+        where("isApproved", "==", true), 
+        where("isAvailable", "==", true)
+    ];
+
+    if (vehicleType !== 'all') {
+        conditions.push(where("vehicleType", "==", vehicleType));
     }
+
+    const q = query(driversRef, ...conditions);
 
     const driverUnsubscribe = onSnapshot(q, (querySnapshot) => {
         const driversFromDb = querySnapshot.docs.map(doc => ({
