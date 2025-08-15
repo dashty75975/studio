@@ -1,8 +1,15 @@
 
 'use client';
 
-import { cn } from "@/lib/utils";
 import type { VehicleCategory } from "@/lib/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface VehicleFilterProps {
   categories: VehicleCategory[];
@@ -11,23 +18,27 @@ interface VehicleFilterProps {
 }
 
 export default function VehicleFilter({ categories, selectedType, onSelectType }: VehicleFilterProps) {
+  const selectedCategory = categories.find(c => c.value === selectedType);
+  const SelectedIcon = selectedCategory?.icon;
+
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      {categories.map((category) => (
-        <button
-          key={category.value}
-          onClick={() => onSelectType(category.value as string)}
-          className={cn(
-            "px-4 py-2 text-sm font-medium rounded-full transition-colors flex items-center gap-2 capitalize border",
-            selectedType === category.value
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-background/80 text-foreground hover:bg-muted border-border"
-          )}
-        >
-          <category.icon className="w-4 h-4" />
-          {category.label}
-        </button>
-      ))}
-    </div>
+    <Select value={selectedType} onValueChange={onSelectType}>
+      <SelectTrigger className="w-[280px] capitalize">
+        <div className="flex items-center gap-2">
+          {SelectedIcon && <SelectedIcon className="w-4 h-4" />}
+          <SelectValue placeholder="Select a vehicle type" />
+        </div>
+      </SelectTrigger>
+      <SelectContent>
+        {categories.map((category) => (
+          <SelectItem key={category.value} value={category.value as string} className="capitalize">
+            <div className="flex items-center gap-2">
+               <category.icon className="w-4 h-4" />
+               {category.label}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
