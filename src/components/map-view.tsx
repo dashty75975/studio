@@ -22,7 +22,6 @@ const getIconComponent = (iconName: string) => {
 
 export default function MapView() {
   const [allDrivers, setAllDrivers] = useState<Driver[]>([]);
-  const [filteredDrivers, setFilteredDrivers] = useState<Driver[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [vehicleType, setVehicleType] = useState<VehicleType | 'all'>('all');
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
@@ -90,13 +89,12 @@ export default function MapView() {
     };
   }, []);
   
-  // Effect to filter drivers whenever the master list or the filter type changes
-  useEffect(() => {
+  // Filter drivers based on vehicleType. This is derived state.
+  const filteredDrivers = useMemo(() => {
     if (vehicleType === 'all') {
-      setFilteredDrivers(allDrivers);
-    } else {
-      setFilteredDrivers(allDrivers.filter(driver => driver.vehicleType === vehicleType));
+      return allDrivers;
     }
+    return allDrivers.filter(driver => driver.vehicleType === vehicleType);
   }, [allDrivers, vehicleType]);
 
 
