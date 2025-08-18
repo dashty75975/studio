@@ -54,7 +54,7 @@ function MapContent() {
             lng: position.coords.longitude,
           };
           setUserLocation(newUserLocation);
-          map?.moveCamera({center: newUserLocation, zoom: 13});
+          map?.moveCamera({center: newUserLocation, zoom: 14});
         },
         (error) => {
           console.error('Error getting location:', error);
@@ -88,7 +88,7 @@ function MapContent() {
   }, [allDrivers, selectedVehicleType]);
 
   const vehicleInfoMap = useMemo(() => {
-    const map = new (globalThis as any).Map<string, { icon: React.ElementType, color: string }>();
+    const map = new Map<string, { icon: React.ElementType, color: string }>();
     currentVehicleCategories.forEach(cat => {
       if (cat.value !== 'all') {
         map.set(cat.value as string, { icon: cat.icon, color: cat.color });
@@ -100,7 +100,7 @@ function MapContent() {
   const handleRecenter = useCallback(() => {
     if (map && userLocation) {
       map.panTo(userLocation);
-      map.setZoom(13);
+      map.setZoom(14);
     }
   }, [map, userLocation]);
 
@@ -194,7 +194,7 @@ export default function MapView() {
       <div className="h-full w-full relative">
         <GoogleMap
           defaultCenter={SULAYMANIYAH_COORDS}
-          defaultZoom={13}
+          defaultZoom={14}
           mapId="suly-track-map"
           disableDefaultUI={true}
           gestureHandling={'greedy'}
