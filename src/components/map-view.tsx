@@ -2,16 +2,17 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { APIProvider, Map as GoogleMap, AdvancedMarker, Pin, InfoWindow } from '@vis.gl/react-google-maps';
+import { APIProvider, AdvancedMarker, InfoWindow, Map as GoogleMap } from '@vis.gl/react-google-maps';
 import type { Driver, VehicleCategory } from '@/lib/types';
 import DriverCard from './driver-card';
-import { Loader2, Terminal, Grip } from 'lucide-react';
+import { Loader2, Terminal, Grip, LocateFixed } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import * as LucideIcons from 'lucide-react';
 import VehicleFilter from './vehicle-filter';
 import { vehicleCategories as mockVehicleCategories } from '@/lib/mock-data';
+import { Button } from './ui/button';
 
 const SULAYMANIYAH_COORDS = { lat: 35.5642, lng: 45.4333 };
 
@@ -31,11 +32,13 @@ export default function MapView() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
   const [selectedVehicleType, setSelectedVehicleType] = useState('all');
+  const [map, setMap] = useState<google.maps.Map | null>(null);
 
   const currentVehicleCategories: VehicleCategory[] = useMemo(() => {
     const allCategory: VehicleCategory = { value: 'all', label: 'All', icon: Grip, color: '#ffffff', iconName: 'Grip' };
     const categoriesFromMock = mockVehicleCategories.map(c => ({
       ...c,
+      icon: getIconComponent(c.iconName),
       value: c.value as string,
     }));
     return [allCategory, ...categoriesFromMock];
@@ -83,7 +86,7 @@ export default function MapView() {
   }, [allDrivers, selectedVehicleType]);
 
   const vehicleInfoMap = useMemo(() => {
-    const map = new Map<string, { icon: React.ElementType, color: string }>();
+    const map = new (globalThis as any).Map<string, { icon: React.ElementType, color: string }>();
     currentVehicleCategories.forEach(cat => {
       if (cat.value !== 'all') {
         map.set(cat.value, { icon: cat.icon, color: cat.color });
@@ -91,6 +94,13 @@ export default function MapView() {
     });
     return map;
   }, [currentVehicleCategories]);
+  
+  const handleRecenter = () => {
+    if (map && userLocation) {
+      map.panTo(userLocation);
+      map.setZoom(13);
+    }
+  };
 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -130,10 +140,11 @@ export default function MapView() {
             </div>
         </div>
         <GoogleMap
+          ref={setMap}
           defaultCenter={userLocation}
           defaultZoom={13}
           mapId="suly-track-map"
-          disableDefaultUI={false}
+          disableDefaultUI={true}
           gestureHandling={'greedy'}
           className="h-full w-full"
         >
@@ -144,7 +155,7 @@ export default function MapView() {
           )}
           {filteredDrivers.map((driver) => {
               const vehicleInfo = vehicleInfoMap.get(driver.vehicleType);
-              const CustomIcon = vehicleInfo?.icon || Pin;
+              const CustomIcon = vehicleInfo?.icon || Grip;
               return (
                 <AdvancedMarker
                   key={driver._id}
@@ -168,6 +179,17 @@ export default function MapView() {
             </InfoWindow>
           )}
         </GoogleMap>
+        <div className="absolute bottom-4 right-4 z-10">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRecenter}
+              className="bg-background/80 hover:bg-background/100"
+              aria-label="Recenter map"
+            >
+              <LocateFixed className="h-5 w-5" />
+            </Button>
+        </div>
       </div>
     </APIProvider>
   );
