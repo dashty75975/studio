@@ -144,7 +144,7 @@ export default function AdminPage() {
         const updateData: Partial<Driver> = { ...data };
         // Don't update password if it's not provided
         if (!data.password) {
-          delete updateData.password;
+          delete (updateData as any).password;
         }
         await updateDoc(docRef, updateData);
     } else {
@@ -374,3 +374,5 @@ export default function AdminPage() {
     </div>
   );
 }
+
+    
